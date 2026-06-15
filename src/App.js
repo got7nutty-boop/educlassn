@@ -793,64 +793,164 @@ ${exercise.questions.map((q, i) => `
 // ── Results (teacher) ──────────────────────────────────────────────────────
 function Results({ user, exercises, submissions }) {
   const myExercises = exercises.filter(e => e.authorId === user.id);
-  const [selectedEx, setSelectedEx] = useState(null);
+  const myExerciseIds = myExercises.map(ex => ex.id);
+  const teacherSubmissions = submissions.filter(s => myExerciseIds.includes(s.exerciseId));
+  const [selectedEx, setSelectedEx] = useState(myExercises[0] || null);
 
   const exSubs = submissions.filter(s => s.exerciseId === selectedEx?.id);
+  const averageScore = teacherSubmissions.length
+    ? Math.round(teacherSubmissions.reduce((sum, s) => sum + s.percentage, 0) / teacherSubmissions.length)
+    : 0;
+  const highestScore = teacherSubmissions.length
+    ? Math.max(...teacherSubmissions.map(s => s.percentage))
+    : 0;
+  const selectedAverage = exSubs.length
+    ? Math.round(exSubs.reduce((sum, s) => sum + s.percentage, 0) / exSubs.length)
+    : 0;
+
+  const stats = [
+    { label: "แบบฝึกหัดของฉัน", value: myExercises.length, icon: "📝", color: COLORS.saffron },
+    { label: "ผู้ส่งทั้งหมด", value: teacherSubmissions.length, icon: "✅", color: COLORS.jade },
+    { label: "คะแนนเฉลี่ย", value: `${averageScore}%`, icon: "📈", color: COLORS.navyLight },
+    { label: "คะแนนสูงสุด", value: `${highestScore}%`, icon: "🏆", color: COLORS.green },
+  ];
 
   return (
     <div>
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.navy, margin: "0 0 20px" }}>📊 ผลการทำแบบฝึกหัด</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
         <div>
-          {myExercises.map(ex => (
-            <button key={ex.id} onClick={() => setSelectedEx(ex)} style={{
-              display: "block", width: "100%", textAlign: "left",
-              padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
-              fontFamily: "inherit", marginBottom: 8,
-              background: selectedEx?.id === ex.id ? COLORS.saffron : COLORS.white,
-              color: selectedEx?.id === ex.id ? COLORS.navy : COLORS.navy,
-              fontWeight: selectedEx?.id === ex.id ? 700 : 500,
-              boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>{ex.title}</div>
-              <div style={{ fontSize: 12, color: COLORS.slate, marginTop: 2 }}>ส่งแล้ว: {submissions.filter(s => s.exerciseId === ex.id).length} คน</div>
-            </button>
-          ))}
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.navy, margin: 0 }}>📊 แดชบอร์ดคะแนนแบบฝึกหัด</h2>
+          <p style={{ color: COLORS.slate, margin: "6px 0 0", fontSize: 14 }}>
+            รวบรวมผลการทำแบบฝึกหัดและรายชื่อนักเรียนที่ส่งงานแล้ว
+          </p>
         </div>
-        <div>
-          {selectedEx ? (
-            <Card accent={COLORS.jade}>
-              <div style={{ padding: 24 }}>
-                <h3 style={{ margin: "0 0 20px", color: COLORS.navy }}>{selectedEx.title}</h3>
-                {exSubs.length === 0
-                  ? <div style={{ color: COLORS.slate }}>ยังไม่มีนักเรียนส่งงาน</div>
-                  : exSubs.map(s => (
-                    <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: COLORS.bg, borderRadius: 10, marginBottom: 10 }}>
-                      <div>
-                        <div style={{ fontWeight: 600, color: COLORS.navy }}>{s.studentName}</div>
-                        <div style={{ fontSize: 13, color: COLORS.slate }}>{s.score}/{s.maxScore} ข้อ · {s.date}</div>
-                        {s.comment && <div style={{ fontSize: 12, color: COLORS.jade, marginTop: 4 }}>{s.comment}</div>}
-                      </div>
-                      <div style={{
-                        width: 52, height: 52, borderRadius: "50%",
-                        background: s.percentage >= 70 ? COLORS.greenLight : COLORS.redLight,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontWeight: 900, fontSize: 16, fontFamily: "monospace",
-                        color: s.percentage >= 70 ? COLORS.green : COLORS.red,
-                      }}>
-                        {s.percentage}%
-                      </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14, marginBottom: 20 }}>
+        {stats.map(stat => (
+          <Card key={stat.label} accent={stat.color}>
+            <div style={{ padding: 18 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <span style={{ color: COLORS.slate, fontSize: 13, fontWeight: 700 }}>{stat.label}</span>
+                <span style={{ fontSize: 22 }}>{stat.icon}</span>
+              </div>
+              <div style={{ color: COLORS.navy, fontSize: 28, fontWeight: 900, fontFamily: "monospace" }}>{stat.value}</div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 20 }}>
+        <Card>
+          <div style={{ padding: 18 }}>
+            <h3 style={{ color: COLORS.navy, margin: "0 0 14px", fontSize: 16 }}>รายการแบบฝึกหัด</h3>
+            {myExercises.length === 0 ? (
+              <div style={{ color: COLORS.slate, fontSize: 14 }}>ยังไม่มีแบบฝึกหัดที่สร้างไว้</div>
+            ) : myExercises.map(ex => {
+              const sentCount = submissions.filter(s => s.exerciseId === ex.id).length;
+              return (
+                <button key={ex.id} onClick={() => setSelectedEx(ex)} style={{
+                  display: "block", width: "100%", textAlign: "left",
+                  padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+                  fontFamily: "inherit", marginBottom: 8,
+                  background: selectedEx?.id === ex.id ? COLORS.saffronLight : COLORS.bg,
+                  color: COLORS.navy,
+                  fontWeight: selectedEx?.id === ex.id ? 800 : 600,
+                  borderLeft: `4px solid ${selectedEx?.id === ex.id ? COLORS.saffron : COLORS.slateLight}`,
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4 }}>{ex.title}</div>
+                  <div style={{ fontSize: 12, color: COLORS.slate, marginTop: 4 }}>{ex.subject} · ส่งแล้ว {sentCount} คน</div>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+
+        {selectedEx ? (
+          <div>
+            <Card accent={COLORS.jade} style={{ marginBottom: 16 }}>
+              <div style={{ padding: 22 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+                  <div>
+                    <h3 style={{ margin: "0 0 6px", color: COLORS.navy }}>{selectedEx.title}</h3>
+                    <div style={{ color: COLORS.slate, fontSize: 14 }}>{selectedEx.subject} · ครบกำหนด {selectedEx.dueDate}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <div style={{ background: COLORS.bg, borderRadius: 10, padding: "10px 14px", textAlign: "center", minWidth: 88 }}>
+                      <div style={{ color: COLORS.slate, fontSize: 12, fontWeight: 700 }}>ผู้ส่ง</div>
+                      <div style={{ color: COLORS.navy, fontSize: 20, fontWeight: 900 }}>{exSubs.length}</div>
                     </div>
-                  ))
-                }
+                    <div style={{ background: COLORS.bg, borderRadius: 10, padding: "10px 14px", textAlign: "center", minWidth: 88 }}>
+                      <div style={{ color: COLORS.slate, fontSize: 12, fontWeight: 700 }}>เฉลี่ย</div>
+                      <div style={{ color: selectedAverage >= 70 ? COLORS.green : COLORS.red, fontSize: 20, fontWeight: 900 }}>{selectedAverage}%</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </Card>
-          ) : (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: COLORS.slate, fontSize: 16 }}>
-              👈 เลือกแบบฝึกหัดเพื่อดูผล
+
+            <Card>
+              <div style={{ padding: 22 }}>
+                <h3 style={{ color: COLORS.navy, margin: "0 0 16px", fontSize: 16 }}>รายชื่อนักเรียนที่ทำแบบฝึกหัด</h3>
+                {exSubs.length === 0 ? (
+                  <div style={{ padding: 32, textAlign: "center", color: COLORS.slate, background: COLORS.bg, borderRadius: 12 }}>
+                    ยังไม่มีนักเรียนส่งแบบฝึกหัดนี้
+                  </div>
+                ) : (
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
+                      <thead>
+                        <tr style={{ background: COLORS.bg }}>
+                          {["นักเรียน", "วันที่ส่ง", "คะแนน", "เปอร์เซ็นต์", "สถานะ"].map(head => (
+                            <th key={head} style={{ textAlign: "left", padding: "12px 14px", color: COLORS.slate, fontSize: 13, fontWeight: 800 }}>
+                              {head}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {exSubs.map(s => (
+                          <tr key={s.id} style={{ borderBottom: `1px solid ${COLORS.slateLight}` }}>
+                            <td style={{ padding: "14px", color: COLORS.navy, fontWeight: 700 }}>{s.studentName}</td>
+                            <td style={{ padding: "14px", color: COLORS.slate, fontSize: 14 }}>{s.date}</td>
+                            <td style={{ padding: "14px", color: COLORS.navy, fontWeight: 700 }}>{s.score}/{s.maxScore}</td>
+                            <td style={{ padding: "14px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <div style={{ flex: 1, height: 8, background: COLORS.slateLight, borderRadius: 999, overflow: "hidden", minWidth: 90 }}>
+                                  <div style={{
+                                    width: `${s.percentage}%`, height: "100%",
+                                    background: s.percentage >= 70 ? COLORS.green : COLORS.red,
+                                  }} />
+                                </div>
+                                <strong style={{ color: s.percentage >= 70 ? COLORS.green : COLORS.red, fontFamily: "monospace" }}>{s.percentage}%</strong>
+                              </div>
+                            </td>
+                            <td style={{ padding: "14px" }}>
+                              <span style={{
+                                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                padding: "5px 10px", borderRadius: 999, fontSize: 12, fontWeight: 800,
+                                color: s.percentage >= 70 ? COLORS.green : COLORS.red,
+                                background: s.percentage >= 70 ? COLORS.greenLight : COLORS.redLight,
+                              }}>
+                                {s.percentage >= 70 ? "ผ่าน" : "ควรปรับปรุง"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+        ) : (
+          <Card>
+            <div style={{ padding: 40, textAlign: "center", color: COLORS.slate }}>
+              เลือกแบบฝึกหัดเพื่อดูรายชื่อและคะแนน
             </div>
-          )}
-        </div>
+          </Card>
+        )}
       </div>
     </div>
   );
