@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase, isSupabaseConfigured } from "./supabaseClient";
 
 // ── Design tokens ──────────────────────────────────────────────────────────
 // Palette: deep navy (#0F1B3C) + warm saffron (#F5A623) + soft jade (#3DBCA1)
@@ -91,6 +92,30 @@ const callClaude = async (messages, systemPrompt = "") => {
   });
   const data = await res.json();
   return data.content?.map(b => b.text || "").join("") || "";
+};
+
+const profileToUser = (profile, authUser) => ({
+  id: profile.id,
+  name: `${profile.first_name || ""} ${profile.last_name || ""}`.trim(),
+  role: profile.role,
+  subject: profile.subject || "",
+  department: profile.department || "",
+  level: profile.level || "",
+  class: profile.classroom || "",
+  username: authUser?.email || "",
+  email: authUser?.email || "",
+});
+
+const loadUserProfile = async (authUser) => {
+  if (!supabase || !authUser) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", authUser.id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return profileToUser(data, authUser);
 };
 
 // ── Components ─────────────────────────────────────────────────────────────
@@ -190,12 +215,45 @@ function LoginScreen({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    const pool = USERS[role];
-    const user = pool.find(u => u.username === username && u.password === password);
-    if (user) { setError(""); onLogin(user); }
-    else setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+  const handleLogin = async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      setError("ยังไม่ได้ตั้งค่า Supabase URL และ Anon Key");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({
+      email: username.trim(),
+      password,
+    });
+
+    if (loginError) {
+      setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      setLoading(false);
+      return;
+    }
+
+    const profile = await loadUserProfile(data.user);
+    if (!profile) {
+      await supabase.auth.signOut();
+      setError("บัญชีนี้ยังไม่มีข้อมูลโปรไฟล์ในตาราง profiles");
+      setLoading(false);
+      return;
+    }
+
+    if (profile.role !== role) {
+      await supabase.auth.signOut();
+      setError(`บัญชีนี้เป็น${profile.role === "teacher" ? "ครู" : "นักเรียน"} กรุณาเลือกประเภทผู้ใช้ให้ถูกต้อง`);
+      setLoading(false);
+      return;
+    }
+
+    onLogin(profile);
+    setLoading(false);
   };
 
   return (
@@ -238,7 +296,7 @@ function LoginScreen({ onLogin }) {
               ))}
             </div>
 
-            <Input label="ชื่อผู้ใช้" value={username} onChange={setUsername} placeholder={role === "teacher" ? "teacher1" : "student1"} />
+            <Input label="อีเมล" value={username} onChange={setUsername} placeholder={role === "teacher" ? "teacher1@example.com" : "student1@example.com"} />
             <Input label="รหัสผ่าน" value={password} onChange={setPassword} type="password" placeholder="••••" />
 
             {error && (
@@ -247,12 +305,12 @@ function LoginScreen({ onLogin }) {
               </div>
             )}
 
-            <Button onClick={handleLogin} variant={role === "teacher" ? "saffron" : "jade"} style={{ width: "100%", justifyContent: "center", fontSize: 16 }}>
-              เข้าสู่ระบบ
+            <Button onClick={handleLogin} disabled={loading} variant={role === "teacher" ? "saffron" : "jade"} style={{ width: "100%", justifyContent: "center", fontSize: 16 }}>
+              {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
             </Button>
 
             <div style={{ marginTop: 20, padding: 14, background: COLORS.bg, borderRadius: 10, fontSize: 12, color: COLORS.slate }}>
-              <strong>ทดสอบ:</strong> {role === "teacher" ? "teacher1 / 1234  หรือ  teacher2 / 1234" : "student1 / 1234  หรือ  student2 / 1234"}
+              <strong>Supabase:</strong> ใช้อีเมลและรหัสผ่านจาก Authentication แล้วกำหนดบทบาทในตาราง profiles
             </div>
           </div>
         </Card>
@@ -1003,6 +1061,8 @@ function Settings({ user, onSave }) {
   const [department, setDepartment] = useState(user.department || "");
   const [level, setLevel] = useState(user.level || user.class || "");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const parts = (user.name || "").trim().split(/\s+/);
@@ -1012,14 +1072,38 @@ function Settings({ user, onSave }) {
     setLevel(user.level || user.class || "");
   }, [user]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const name = `${firstName.trim()} ${lastName.trim()}`.trim() || user.name;
-    onSave({
+    const nextUser = {
       ...user,
       name,
       department: department.trim(),
       ...(isTeacher ? {} : { level: level.trim(), class: level.trim() }),
-    });
+    };
+
+    setSaving(true);
+    setError("");
+
+    if (supabase) {
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          department: department.trim(),
+          ...(isTeacher ? {} : { level: level.trim(), classroom: level.trim() }),
+        })
+        .eq("id", user.id);
+
+      if (updateError) {
+        setError("บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบสิทธิ์ใน Supabase");
+        setSaving(false);
+        return;
+      }
+    }
+
+    onSave(nextUser);
+    setSaving(false);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
   };
@@ -1063,9 +1147,14 @@ function Settings({ user, onSave }) {
                 ✅ บันทึกข้อมูลเรียบร้อยแล้ว
               </div>
             )}
+            {error && (
+              <div style={{ background: COLORS.redLight, color: COLORS.red, borderRadius: 10, padding: "10px 14px", marginBottom: 16, fontWeight: 700 }}>
+                ⚠️ {error}
+              </div>
+            )}
 
-            <Button onClick={handleSave} variant={isTeacher ? "saffron" : "jade"}>
-              💾 บันทึกการแก้ไข
+            <Button onClick={handleSave} disabled={saving} variant={isTeacher ? "saffron" : "jade"}>
+              {saving ? "กำลังบันทึก..." : "💾 บันทึกการแก้ไข"}
             </Button>
           </div>
         </Card>
