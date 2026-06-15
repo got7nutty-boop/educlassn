@@ -27,7 +27,7 @@ const COLORS = {
 const USERS = {
   teacher: [
     { id: "t1", name: "อาจารย์สมชาย ใจดี", role: "teacher", subject: "คณิตศาสตร์", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher1", password: "1234" },
-    { id: "t2", name: "อาจารย์สุมาลี รักเรียน", role: "teacher", subject: "ภาษาไทย", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher2", password: "1234" },
+    { id: "t2", name: "อาจารย์สุมาลี รักเรียนดี", role: "teacher", subject: "ภาษาไทย", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher2", password: "1234" },
   ],
   student: [
     { id: "s1", name: "นายกิตติ มานะ", role: "student", department: "แผนกวิชาคอมพิวเตอร์ธุรกิจ", level: "ปวช.1", class: "ปวช.1/1", username: "student1", password: "1234" },
