@@ -77,7 +77,6 @@ const INITIAL_MESSAGES = [
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-const cls = (...args) => args.filter(Boolean).join(" ");
 
 const callClaude = async (messages, systemPrompt = "") => {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
