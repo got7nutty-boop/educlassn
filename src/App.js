@@ -25,17 +25,17 @@ const COLORS = {
 };
 
 // ── Mock data ──────────────────────────────────────────────────────────────
-const USERS = {
-  teacher: [
-    { id: "t1", name: "อาจารย์สมชาย ใจดี", role: "teacher", subject: "คณิตศาสตร์", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher1", password: "1234" },
-    { id: "t2", name: "อาจารย์สุมาลี รักเรียนดี", role: "teacher", subject: "ภาษาไทย", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher2", password: "1234" },
-  ],
-  student: [
-    { id: "s1", name: "นายกิตติ มานะ", role: "student", department: "แผนกวิชาคอมพิวเตอร์ธุรกิจ", level: "ปวช.1", class: "ปวช.1/1", username: "student1", password: "1234" },
-    { id: "s2", name: "นางสาวนิดา สุขใจ", role: "student", department: "แผนกวิชาการบัญชี", level: "ปวช.1", class: "ปวช.1/1", username: "student2", password: "1234" },
-    { id: "s3", name: "นายภูมิ วิชาดี", role: "student", department: "แผนกวิชาเทคโนโลยีสารสนเทศ", level: "ปวช.2", class: "ปวช.2/1", username: "student3", password: "1234" },
-  ],
-};
+//const USERS = {
+ // teacher: [
+//    { id: "t1", name: "อาจารย์สมชาย ใจดี", role: "teacher", subject: "คณิตศาสตร์", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher1", password: "1234" },
+ //   { id: "t2", name: "อาจารย์สุมาลี รักเรียนดี", role: "teacher", subject: "ภาษาไทย", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher2", password: "1234" },
+ // ],
+//  student: [
+ //   { id: "s1", name: "นายกิตติ มานะ", role: "student", department: "แผนกวิชาคอมพิวเตอร์ธุรกิจ", level: "ปวช.1", class: "ปวช.1/1", username: "student1", password: "1234" },
+ //   { id: "s2", name: "นางสาวนิดา สุขใจ", role: "student", department: "แผนกวิชาการบัญชี", level: "ปวช.1", class: "ปวช.1/1", username: "student2", password: "1234" },
+ //   { id: "s3", name: "นายภูมิ วิชาดี", role: "student", department: "แผนกวิชาเทคโนโลยีสารสนเทศ", level: "ปวช.2", class: "ปวช.2/1", username: "student3", password: "1234" },
+//  ],
+//};
 
 const INITIAL_ANNOUNCEMENTS = [
   { id: "a1", author: "อาจารย์สมชาย ใจดี", authorId: "t1", subject: "📢 หยุดเรียนวันพรุ่งนี้", body: "เนื่องจากมีกิจกรรมวันไหว้ครู นักเรียนทุกคนหยุดเรียนในวันพรุ่งนี้ค่ะ/ครับ", date: "15 มิ.ย. 2568", pinned: true },
