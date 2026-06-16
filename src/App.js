@@ -1189,6 +1189,7 @@ function Settings({ user, onSave }) {
 // ── Main App ───────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [page, setPage] = useState("dashboard");
   const [announcements, setAnnouncements] = useState(INITIAL_ANNOUNCEMENTS);
   const [exercises, setExercises] = useState(INITIAL_EXERCISES);
@@ -1196,6 +1197,39 @@ export default function App() {
   const [submissions, setSubmissions] = useState([]);
   const [activeExercise, setActiveExercise] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // ── Restore session on page reload ──────────────────────────────────────
+  useEffect(() => {
+    if (!supabase) { setAuthLoading(false); return; }
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const profile = await loadUserProfile(session.user);
+        if (profile) setUser(profile);
+      }
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        const profile = await loadUserProfile(session.user);
+        if (profile) setUser(profile);
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+        setPage("dashboard");
+        setActiveExercise(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    if (supabase) await supabase.auth.signOut();
+    setUser(null);
+    setActiveExercise(null);
+    setPage("dashboard");
+  };
 
   const handleSubmitExercise = (exId, answers, score, maxScore, percentage, comment, results) => {
     setSubmissions(prev => [...prev, {
@@ -1206,6 +1240,16 @@ export default function App() {
     }]);
   };
 
+  if (authLoading) return (
+    <div style={{
+      minHeight: "100vh", background: `linear-gradient(135deg, ${COLORS.navy} 0%, ${COLORS.navyLight} 100%)`,
+      display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16,
+    }}>
+      <div style={{ fontSize: 48 }}>🏫</div>
+      <div style={{ color: COLORS.white, fontSize: 18, fontWeight: 600 }}>กำลังโหลด...</div>
+    </div>
+  );
+
   if (!user) return <LoginScreen onLogin={u => { setUser(u); setPage("dashboard"); }} />;
 
   const isTeacher = user.role === "teacher";
@@ -1213,7 +1257,7 @@ export default function App() {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg, fontFamily: "'Sarabun', system-ui, sans-serif" }}>
       <Sidebar user={user} page={activeExercise ? "exercises" : page} setPage={p => { setPage(p); setActiveExercise(null); }}
-        onLogout={() => { setUser(null); setActiveExercise(null); setPage("dashboard"); }}
+        onLogout={handleLogout}
         mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
       {/* Main content */}
