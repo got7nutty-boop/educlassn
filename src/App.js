@@ -561,6 +561,33 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
   );
 }
 
+// ── Back Button ───────────────────────────────────────────────────────────
+function BackButton({ onClick, label = "กลับสู่แดชบอร์ด" }) {
+  return (
+    <button onClick={onClick} style={{
+      display: "inline-flex", alignItems: "center", gap: 8,
+      background: COLORS.glass,
+      border: `1px solid ${COLORS.glassBorder}`,
+      borderRadius: 12, padding: "9px 16px",
+      color: COLORS.textSecondary, fontWeight: 600, fontSize: 13,
+      cursor: "pointer", fontFamily: "inherit",
+      marginBottom: 20, transition: "all 0.2s ease",
+    }}
+    onMouseEnter={e => {
+      e.currentTarget.style.borderColor = COLORS.cyanBorder;
+      e.currentTarget.style.color = COLORS.textPrimary;
+      e.currentTarget.style.background = COLORS.cyanGlow;
+    }}
+    onMouseLeave={e => {
+      e.currentTarget.style.borderColor = COLORS.glassBorder;
+      e.currentTarget.style.color = COLORS.textSecondary;
+      e.currentTarget.style.background = COLORS.glass;
+    }}>
+      <span style={{ fontSize: 15 }}>←</span> {label}
+    </button>
+  );
+}
+
 // ── Dashboard ──────────────────────────────────────────────────────────────
 function Dashboard({ user, announcements, exercises, submissions, messages, setPage }) {
   const isTeacher = user.role === "teacher";
@@ -1546,17 +1573,26 @@ export default function App() {
             submissions={submissions} messages={messages} setPage={setPage} />
         )}
         {page === "announcements" && !activeExercise && (
-          <Announcements user={user} announcements={announcements}
-            onAdd={handleAddAnnouncement} onDelete={handleDeleteAnnouncement} />
+          <>
+            <BackButton onClick={() => setPage("dashboard")} />
+            <Announcements user={user} announcements={announcements}
+              onAdd={handleAddAnnouncement} onDelete={handleDeleteAnnouncement} />
+          </>
         )}
         {page === "messages" && !activeExercise && (
-          <Messages user={user} messages={messages} onSend={handleSendMessage} />
+          <>
+            <BackButton onClick={() => setPage("dashboard")} />
+            <Messages user={user} messages={messages} onSend={handleSendMessage} />
+          </>
         )}
         {page === "exercises" && !activeExercise && (
-          <ExerciseList user={user} exercises={exercises}
-            onAdd={handleAddExercise} onDelete={handleDeleteExercise}
-            submissions={submissions}
-            onOpenExercise={ex => setActiveExercise(ex)} />
+          <>
+            <BackButton onClick={() => setPage("dashboard")} />
+            <ExerciseList user={user} exercises={exercises}
+              onAdd={handleAddExercise} onDelete={handleDeleteExercise}
+              submissions={submissions}
+              onOpenExercise={ex => setActiveExercise(ex)} />
+          </>
         )}
         {page === "exercises" && activeExercise && (
           <ExerciseAttempt user={user} exercise={activeExercise}
@@ -1564,14 +1600,23 @@ export default function App() {
             onBack={() => setActiveExercise(null)} />
         )}
         {page === "results" && isTeacher && (
-          <Results user={user} exercises={exercises} submissions={submissions}
-            onDeleteSubmission={handleDeleteSubmission} onDeleteExercise={handleDeleteExercise} />
+          <>
+            <BackButton onClick={() => setPage("dashboard")} />
+            <Results user={user} exercises={exercises} submissions={submissions}
+              onDeleteSubmission={handleDeleteSubmission} onDeleteExercise={handleDeleteExercise} />
+          </>
         )}
         {page === "myscores" && !isTeacher && (
-          <MyScores user={user} submissions={submissions} exercises={exercises} />
+          <>
+            <BackButton onClick={() => setPage("dashboard")} />
+            <MyScores user={user} submissions={submissions} exercises={exercises} />
+          </>
         )}
         {page === "settings" && !activeExercise && (
-          <Settings user={user} onSave={setUser} />
+          <>
+            <BackButton onClick={() => setPage("dashboard")} />
+            <Settings user={user} onSave={setUser} />
+          </>
         )}
         </div>
       </main>
