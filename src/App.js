@@ -38,11 +38,13 @@ const USERS = {
   ],
 };
 
+// eslint-disable-next-line no-unused-vars
 const INITIAL_ANNOUNCEMENTS = [
   { id: "a1", author: "อาจารย์สมชาย ใจดี", authorId: "t1", subject: "📢 หยุดเรียนวันพรุ่งนี้", body: "เนื่องจากมีกิจกรรมวันไหว้ครู นักเรียนทุกคนหยุดเรียนในวันพรุ่งนี้ค่ะ/ครับ", date: "15 มิ.ย. 2568", pinned: true },
   { id: "a2", author: "อาจารย์สุมาลี รักเรียน", authorId: "t2", subject: "📝 ส่งงานภาษาไทย", body: "ขอให้นักเรียนส่งงานเรื่องการแต่งกลอนสุภาพภายในวันศุกร์นี้นะคะ", date: "14 มิ.ย. 2568", pinned: false },
 ];
 
+// eslint-disable-next-line no-unused-vars
 const INITIAL_EXERCISES = [
   {
     id: "ex1",
