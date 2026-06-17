@@ -1577,9 +1577,9 @@ export default function App() {
         {page === "settings" && !activeExercise && (
           <Settings user={user} onSave={setUser} />
         )}
+        </div>
       </main>
 
-      </div>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800;900&display=swap');
         * { box-sizing: border-box; }
