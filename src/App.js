@@ -129,6 +129,7 @@ const formatDate = (iso) => {
 const dbToAnnouncement = (r) => ({
   id: r.id, author: r.author_name, authorId: r.author_id,
   subject: r.subject, body: r.body, pinned: r.pinned,
+  imageUrl: r.image_url || null,
   date: formatDate(r.created_at),
 });
 
@@ -643,9 +644,14 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
               <button onClick={() => setPage("announcements")} style={{ background: "none", border: "none", color: COLORS.jade, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>ดูทั้งหมด →</button>
             </div>
             {announcements.slice(0, 3).map(a => (
-              <div key={a.id} style={{ borderLeft: `3px solid ${a.pinned ? COLORS.saffron : COLORS.slateLight}`, paddingLeft: 12, marginBottom: 12 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary }}>{a.subject}</div>
-                <div style={{ fontSize: 12, color: COLORS.textSecondary }}>{a.author} · {a.date}</div>
+              <div key={a.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", borderLeft: `3px solid ${a.pinned ? COLORS.amber : COLORS.glassBorder}`, paddingLeft: 12, marginBottom: 12 }}>
+                {a.imageUrl && (
+                  <img src={a.imageUrl} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                )}
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary }}>{a.subject}</div>
+                  <div style={{ fontSize: 12, color: COLORS.textSecondary }}>{a.author} · {a.date}</div>
+                </div>
               </div>
             ))}
           </div>
@@ -685,56 +691,197 @@ function Announcements({ user, announcements, onAdd, onDelete }) {
   const [body, setBody] = useState("");
   const [pinned, setPinned] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState("");
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("ขนาดไฟล์ต้องไม่เกิน 5MB");
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadImage = async (file) => {
+    if (!supabase) return null;
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    setUploadProgress("กำลังอัปโหลดรูปภาพ...");
+    const { error } = await supabase.storage
+      .from("announcement-images")
+      .upload(path, file, { cacheControl: "3600", upsert: false });
+    if (error) { setUploadProgress(""); return null; }
+    const { data } = supabase.storage.from("announcement-images").getPublicUrl(path);
+    setUploadProgress("");
+    return data?.publicUrl || null;
+  };
 
   const handlePost = async () => {
     if (!subject.trim() || !body.trim()) return;
     setSaving(true);
-    await onAdd({ author: user.name, authorId: user.id, subject, body, pinned });
+    let imageUrl = null;
+    if (imageFile) imageUrl = await uploadImage(imageFile);
+    await onAdd({ author: user.name, authorId: user.id, subject, body, pinned, imageUrl });
     setSubject(""); setBody(""); setPinned(false); setShowForm(false);
+    removeImage();
     setSaving(false);
   };
 
   const handleDelete = (id) => onDelete(id);
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>📢 ประกาศ / ข่าวสาร</h2>
-        {isTeacher && <Button onClick={() => setShowForm(!showForm)} variant="saffron">+ โพสต์ประกาศ</Button>}
+    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>📰 ฟีดข่าวสาร</h2>
       </div>
 
-      {isTeacher && showForm && (
-        <Card accent={COLORS.saffron} style={{ marginBottom: 24 }}>
-          <div style={{ padding: 24 }}>
-            <h3 style={{ margin: "0 0 16px", color: COLORS.textPrimary }}>✍️ เขียนประกาศใหม่</h3>
-            <Input label="หัวข้อประกาศ" value={subject} onChange={setSubject} placeholder="เช่น หยุดเรียนพิเศษ..." />
-            <Textarea label="รายละเอียด" value={body} onChange={setBody} placeholder="เนื้อหาประกาศ..." />
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <input type="checkbox" id="pin" checked={pinned} onChange={e => setPinned(e.target.checked)} />
-              <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.textPrimary, cursor: "pointer" }}>📌 ปักหมุดประกาศนี้</label>
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <Button onClick={handlePost} variant="saffron" disabled={saving}>{saving ? "กำลังบันทึก..." : "โพสต์"}</Button>
-              <Button onClick={() => setShowForm(false)} variant="ghost">ยกเลิก</Button>
-            </div>
+      {/* Composer — Facebook style "what's on your mind" box */}
+      {isTeacher && (
+        <Card style={{ marginBottom: 20 }}>
+          <div style={{ padding: 16 }}>
+            {!showForm ? (
+              <button onClick={() => setShowForm(true)} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                width: "100%", background: "none", border: "none", cursor: "pointer",
+                padding: 0, fontFamily: "inherit",
+              }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: "50%",
+                  background: G.amber, flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontWeight: 800, color: COLORS.white, fontSize: 16,
+                }}>{user.name.charAt(0)}</div>
+                <div style={{
+                  flex: 1, textAlign: "left", padding: "10px 16px",
+                  background: COLORS.navyMid, borderRadius: 24,
+                  color: COLORS.textMuted, fontSize: 14,
+                }}>
+                  คุณกำลังคิดอะไรอยู่ {user.name.split(" ")[0]}?
+                </div>
+              </button>
+            ) : (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: "50%",
+                    background: G.amber, flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 800, color: COLORS.white, fontSize: 16,
+                  }}>{user.name.charAt(0)}</div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 14 }}>{user.name}</div>
+                    <div style={{ fontSize: 12, color: COLORS.textMuted }}>กำลังโพสต์ประกาศ</div>
+                  </div>
+                </div>
+
+                <Input value={subject} onChange={setSubject} placeholder="หัวข้อประกาศ..." />
+                <Textarea value={body} onChange={setBody} placeholder="คุณกำลังคิดอะไรอยู่..." rows={3} />
+
+                {/* Image preview */}
+                {imagePreview ? (
+                  <div style={{ position: "relative", marginBottom: 16, borderRadius: 14, overflow: "hidden" }}>
+                    <img src={imagePreview} alt="preview" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
+                    <button onClick={removeImage} style={{
+                      position: "absolute", top: 10, right: 10,
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: "rgba(0,0,0,0.6)", border: "none", color: COLORS.white,
+                      cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>✕</button>
+                  </div>
+                ) : (
+                  <button onClick={() => fileInputRef.current?.click()} style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", padding: "14px", marginBottom: 16,
+                    border: `1.5px dashed ${COLORS.glassBorderBright}`, borderRadius: 14,
+                    background: "rgba(56,189,248,0.04)", color: COLORS.cyan,
+                    cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 13,
+                  }}>
+                    🖼️ เพิ่มรูปภาพ
+                  </button>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} style={{ display: "none" }} />
+
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                  <input type="checkbox" id="pin" checked={pinned} onChange={e => setPinned(e.target.checked)} />
+                  <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.textPrimary, cursor: "pointer", fontSize: 13 }}>📌 ปักหมุดประกาศนี้</label>
+                </div>
+
+                {uploadProgress && (
+                  <div style={{ fontSize: 13, color: COLORS.cyan, marginBottom: 12 }}>⏳ {uploadProgress}</div>
+                )}
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <Button onClick={handlePost} variant="saffron" disabled={saving} style={{ flex: 1, justifyContent: "center" }}>
+                    {saving ? "กำลังโพสต์..." : "📤 โพสต์"}
+                  </Button>
+                  <Button onClick={() => { setShowForm(false); removeImage(); }} variant="ghost">ยกเลิก</Button>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       )}
 
-      {announcements.map(a => (
-        <Card key={a.id} accent={a.pinned ? COLORS.saffron : COLORS.slateLight} style={{ marginBottom: 16 }}>
-          <div style={{ padding: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                {a.pinned && <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.amber, letterSpacing: 1 }}>📌 ปักหมุด  </span>}
-                <h3 style={{ margin: "4px 0 8px", color: COLORS.textPrimary, fontSize: 17 }}>{a.subject}</h3>
-                <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 10 }}>{a.author} · {a.date}</div>
-                <p style={{ margin: 0, color: COLORS.textSecondary, lineHeight: 1.7 }}>{a.body}</p>
+      {/* Feed */}
+      {announcements.length === 0 ? (
+        <Card><div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>ยังไม่มีประกาศ</div></Card>
+      ) : announcements.map(a => (
+        <Card key={a.id} accent={a.pinned ? COLORS.amber : null} style={{ marginBottom: 16 }} glow={a.pinned ? COLORS.amberGlow : null}>
+          {/* Post header */}
+          <div style={{ padding: "16px 18px 12px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
+              background: G.amber,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontWeight: 800, color: COLORS.white, fontSize: 17,
+            }}>{a.author.charAt(0)}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 }}>{a.author}</div>
+              <div style={{ fontSize: 12, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
+                {a.date}
+                {a.pinned && <span style={{ color: COLORS.amber, fontWeight: 700 }}>· 📌 ปักหมุด</span>}
               </div>
-              {isTeacher && a.authorId === user.id && (
-                <Button onClick={() => handleDelete(a.id)} variant="danger" size="sm">🗑</Button>
-              )}
             </div>
+            {isTeacher && a.authorId === user.id && (
+              <Button onClick={() => handleDelete(a.id)} variant="danger" size="sm">🗑</Button>
+            )}
+          </div>
+
+          {/* Post body */}
+          <div style={{ padding: "0 18px 16px" }}>
+            <h3 style={{ margin: "0 0 8px", color: COLORS.textPrimary, fontSize: 16, fontWeight: 800 }}>{a.subject}</h3>
+            <p style={{ margin: 0, color: COLORS.textSecondary, lineHeight: 1.7, fontSize: 14.5, whiteSpace: "pre-wrap" }}>{a.body}</p>
+          </div>
+
+          {/* Post image */}
+          {a.imageUrl && (
+            <img src={a.imageUrl} alt={a.subject} style={{
+              width: "100%", maxHeight: 480, objectFit: "cover", display: "block",
+            }} />
+          )}
+
+          {/* Engagement bar (visual only, Facebook style) */}
+          <div style={{
+            padding: "10px 18px", display: "flex", gap: 20,
+            borderTop: `1px solid ${COLORS.glassBorder}`, marginTop: a.imageUrl ? 0 : 4,
+          }}>
+            <span style={{ fontSize: 13, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
+              👍 ทราบแล้ว
+            </span>
+            <span style={{ fontSize: 13, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
+              💬 แสดงความเห็น
+            </span>
           </div>
         </Card>
       ))}
@@ -1460,6 +1607,7 @@ export default function App() {
     const { data, error } = await supabase.from("announcements").insert([{
       author_id: ann.authorId, author_name: ann.author,
       subject: ann.subject, body: ann.body, pinned: ann.pinned,
+      image_url: ann.imageUrl || null,
     }]).select().single();
     if (!error && data) setAnnouncements(prev => [dbToAnnouncement(data), ...prev]);
   };
