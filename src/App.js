@@ -7,72 +7,72 @@ import { supabase, isSupabaseConfigured } from "./supabaseClient";
 // Type: system-ui body, heavier weights for display, mono for scores/numbers
 // Signature: colour-coded role "badge bar" along the top edge of every card
 
-// ── AI-Era Design System ─────────────────────────────────────────────────
+// ── AI-Era Design System — Soft Navy ─────────────────────────────────────
 const COLORS = {
-  // Deep space base
-  navy: "#070B14",
-  navyLight: "#0D1526",
-  navyMid: "#111C35",
+  // Soft navy base (ไม่มืดเกินไป อ่านง่าย)
+  navy: "#0F172A",
+  navyLight: "#1E293B",
+  navyMid: "#162032",
 
-  // Neon accents
-  cyan: "#00D4FF",
-  cyanDim: "#00A8CC",
-  cyanGlow: "rgba(0,212,255,0.15)",
-  cyanBorder: "rgba(0,212,255,0.3)",
+  // Accent neon (ลด intensity ลง)
+  cyan: "#38BDF8",
+  cyanDim: "#0EA5E9",
+  cyanGlow: "rgba(56,189,248,0.12)",
+  cyanBorder: "rgba(56,189,248,0.25)",
 
-  violet: "#7C3AED",
-  violetLight: "#A78BFA",
-  violetGlow: "rgba(124,58,237,0.2)",
+  violet: "#818CF8",
+  violetLight: "#A5B4FC",
+  violetGlow: "rgba(129,140,248,0.15)",
 
-  emerald: "#10B981",
-  emeraldLight: "#34D399",
-  emeraldGlow: "rgba(16,185,129,0.15)",
+  emerald: "#34D399",
+  emeraldLight: "#6EE7B7",
+  emeraldGlow: "rgba(52,211,153,0.12)",
 
-  amber: "#F59E0B",
-  amberLight: "#FCD34D",
-  amberGlow: "rgba(245,158,11,0.15)",
+  amber: "#FBBF24",
+  amberLight: "#FDE68A",
+  amberGlow: "rgba(251,191,36,0.12)",
 
-  // Glass surfaces
-  glass: "rgba(255,255,255,0.04)",
-  glassBorder: "rgba(255,255,255,0.08)",
-  glassBorderBright: "rgba(255,255,255,0.15)",
-  glassMid: "rgba(255,255,255,0.07)",
+  // Card surfaces (สว่างขึ้น มีความลึก)
+  glass: "#1E293B",           // card bg หลัก — navy กลาง
+  glassBorder: "rgba(148,163,184,0.12)",
+  glassBorderBright: "rgba(148,163,184,0.25)",
+  glassMid: "#253347",        // card bg รอง
 
-  // Text
+  // Text — readable contrast
   white: "#FFFFFF",
-  textPrimary: "#F0F4FF",
-  textSecondary: "#8B9DC3",
-  textMuted: "#4A5A7A",
+  textPrimary: "#E2E8F0",     // ขาวนวล อ่านสบาย
+  textSecondary: "#94A3B8",   // เทาอ่อน
+  textMuted: "#64748B",       // เทาหม่น
 
   // Status
-  red: "#EF4444",
-  redGlow: "rgba(239,68,68,0.15)",
-  green: "#10B981",
-  greenGlow: "rgba(16,185,129,0.15)",
+  red: "#F87171",
+  redGlow: "rgba(248,113,113,0.12)",
+  green: "#34D399",
+  greenGlow: "rgba(52,211,153,0.12)",
 
-  // Legacy aliases (keep for backward compat)
-  saffron: "#F59E0B",
-  saffronLight: "rgba(245,158,11,0.15)",
-  jade: "#10B981",
-  jadeLight: "rgba(16,185,129,0.12)",
-  bg: "#070B14",
-  slate: "#8B9DC3",
-  slateLight: "rgba(139,157,195,0.12)",
-  redLight: "rgba(239,68,68,0.12)",
-  greenLight: "rgba(16,185,129,0.12)",
+  // Legacy aliases
+  saffron: "#FBBF24",
+  saffronLight: "rgba(251,191,36,0.15)",
+  jade: "#34D399",
+  jadeLight: "rgba(52,211,153,0.12)",
+  bg: "#0F172A",
+  slate: "#94A3B8",
+  slateLight: "rgba(148,163,184,0.1)",
+  redLight: "rgba(248,113,113,0.12)",
+  greenLight: "rgba(52,211,153,0.12)",
 };
 
 // Gradient presets
 const G = {
-  cyan: "linear-gradient(135deg, #00D4FF, #7C3AED)",
-  emerald: "linear-gradient(135deg, #10B981, #00D4FF)",
-  amber: "linear-gradient(135deg, #F59E0B, #EF4444)",
-  violet: "linear-gradient(135deg, #7C3AED, #EC4899)",
-  mesh: `radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.12) 0%, transparent 60%),
-         radial-gradient(ellipse at 80% 20%, rgba(0,212,255,0.10) 0%, transparent 50%),
-         radial-gradient(ellipse at 60% 80%, rgba(16,185,129,0.08) 0%, transparent 50%),
-         #070B14`,
-  sidebarBg: `linear-gradient(180deg, #0A0F1E 0%, #070B14 100%)`,
+  cyan: "linear-gradient(135deg, #38BDF8, #818CF8)",
+  emerald: "linear-gradient(135deg, #34D399, #38BDF8)",
+  amber: "linear-gradient(135deg, #FBBF24, #F87171)",
+  violet: "linear-gradient(135deg, #818CF8, #C084FC)",
+  mesh: `radial-gradient(ellipse at 15% 40%, rgba(129,140,248,0.08) 0%, transparent 55%),
+         radial-gradient(ellipse at 85% 15%, rgba(56,189,248,0.07) 0%, transparent 50%),
+         radial-gradient(ellipse at 55% 85%, rgba(52,211,153,0.06) 0%, transparent 50%),
+         #0F172A`,
+  sidebarBg: `linear-gradient(180deg, #131E30 0%, #0F172A 100%)`,
 };
 
 // ── Data helpers ─────────────────────────────────────────────────────────
@@ -176,23 +176,20 @@ function Card({ children, style, accent, glow }) {
   return (
     <div style={{
       background: COLORS.glass,
-      backdropFilter: "blur(16px)",
-      WebkitBackdropFilter: "blur(16px)",
-      borderRadius: 20,
-      border: `1px solid ${glow ? COLORS.glassBorderBright : COLORS.glassBorder}`,
+      borderRadius: 18,
+      border: `1px solid ${COLORS.glassBorder}`,
       boxShadow: glow
-        ? `0 0 40px ${glow}, 0 8px 32px rgba(0,0,0,0.4)`
-        : "0 8px 32px rgba(0,0,0,0.3)",
+        ? `0 0 24px ${glow}, 0 4px 24px rgba(0,0,0,0.25)`
+        : "0 2px 16px rgba(0,0,0,0.2)",
       overflow: "hidden",
       position: "relative",
-      transition: "all 0.3s ease",
+      transition: "all 0.25s ease",
       ...style,
     }}>
       {accent && (
         <div style={{
           height: 3,
           background: accent,
-          boxShadow: `0 0 12px ${accent}`,
         }} />
       )}
       {children}
@@ -231,7 +228,7 @@ function Button({ children, onClick, variant = "primary", size = "md", disabled,
       borderColor: "transparent",
     },
     ghost: {
-      background: COLORS.glass, color: COLORS.textSecondary,
+      background: COLORS.glass, color: COLORS.textPrimary,
       border: `1px solid ${COLORS.glassBorder}`,
       backdropFilter: "blur(8px)",
     },
@@ -256,20 +253,19 @@ function Input({ label, value, onChange, type = "text", placeholder }) {
           border: `1px solid ${COLORS.glassBorder}`,
           borderRadius: 12,
           padding: "11px 16px", fontSize: 14, fontFamily: "inherit",
-          background: "rgba(255,255,255,0.05)",
+          background: COLORS.navyMid,
           color: COLORS.textPrimary,
           outline: "none", transition: "all 0.2s ease",
-          backdropFilter: "blur(8px)",
         }}
         onFocus={e => {
           e.target.style.borderColor = COLORS.cyan;
           e.target.style.boxShadow = `0 0 0 3px ${COLORS.cyanGlow}`;
-          e.target.style.background = "rgba(255,255,255,0.07)";
+          e.target.style.background = COLORS.glassMid;
         }}
         onBlur={e => {
           e.target.style.borderColor = COLORS.glassBorder;
           e.target.style.boxShadow = "none";
-          e.target.style.background = "rgba(255,255,255,0.05)";
+          e.target.style.background = COLORS.navyMid;
         }}
       />
     </div>
@@ -287,7 +283,7 @@ function Textarea({ label, value, onChange, placeholder, rows = 4 }) {
           width: "100%", boxSizing: "border-box",
           border: `1px solid ${COLORS.glassBorder}`, borderRadius: 12,
           padding: "11px 16px", fontSize: 14, fontFamily: "inherit",
-          background: "rgba(255,255,255,0.05)",
+          background: COLORS.navyMid,
           color: COLORS.textPrimary, resize: "vertical",
           outline: "none", transition: "all 0.2s ease",
         }}
@@ -481,7 +477,7 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
             padding: "12px 14px", borderRadius: 14,
-            background: COLORS.glassMid,
+            background: "rgba(255,255,255,0.05)",
             border: `1px solid ${COLORS.glassBorder}`,
           }}>
             <div style={{
@@ -584,7 +580,7 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
         { label: "ประกาศทั้งหมด", value: announcements.filter(a => a.authorId === user.id).length, icon: "📢", color: COLORS.navyLight },
       ]
     : [
-        { label: "แบบฝึกหัดทั้งหมด", value: totalExercises, icon: "📝", color: COLORS.navy },
+        { label: "แบบฝึกหัดทั้งหมด", value: totalExercises, icon: "📝", color: COLORS.textPrimary },
         { label: "ส่งแล้ว", value: doneCount, icon: "✅", color: COLORS.jade },
         { label: "คะแนนเฉลี่ย", value: avgScore + "%", icon: "⭐", color: COLORS.saffron },
       ];
@@ -615,14 +611,14 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
         {/* Latest announcements */}
         <Card accent={COLORS.jade}>
           <div style={{ padding: 20 }}>
-            <div style={{ fontWeight: 700, color: COLORS.navy, marginBottom: 14, fontSize: 15, display: "flex", justifyContent: "space-between" }}>
+            <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 14, fontSize: 15, display: "flex", justifyContent: "space-between" }}>
               📢 ประกาศล่าสุด
               <button onClick={() => setPage("announcements")} style={{ background: "none", border: "none", color: COLORS.jade, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>ดูทั้งหมด →</button>
             </div>
             {announcements.slice(0, 3).map(a => (
               <div key={a.id} style={{ borderLeft: `3px solid ${a.pinned ? COLORS.saffron : COLORS.slateLight}`, paddingLeft: 12, marginBottom: 12 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.navy }}>{a.subject}</div>
-                <div style={{ fontSize: 12, color: COLORS.slate }}>{a.author} · {a.date}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary }}>{a.subject}</div>
+                <div style={{ fontSize: 12, color: COLORS.textSecondary }}>{a.author} · {a.date}</div>
               </div>
             ))}
           </div>
@@ -631,15 +627,15 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
         {/* Upcoming exercises */}
         <Card accent={COLORS.saffron}>
           <div style={{ padding: 20 }}>
-            <div style={{ fontWeight: 700, color: COLORS.navy, marginBottom: 14, fontSize: 15, display: "flex", justifyContent: "space-between" }}>
+            <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 14, fontSize: 15, display: "flex", justifyContent: "space-between" }}>
               ✏️ แบบฝึกหัดที่ยังไม่ส่ง
               <button onClick={() => setPage("exercises")} style={{ background: "none", border: "none", color: COLORS.saffron, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>ดูทั้งหมด →</button>
             </div>
             {exercises.filter(e => !mySubmissions.find(s => s.exerciseId === e.id)).slice(0, 3).map(e => (
-              <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, padding: "8px 10px", background: COLORS.bg, borderRadius: 8 }}>
+              <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, padding: "8px 10px", background: COLORS.navyMid, borderRadius: 8 }}>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.navy }}>{e.title}</div>
-                  <div style={{ fontSize: 12, color: COLORS.slate }}>ครบกำหนด: {e.dueDate}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary }}>{e.title}</div>
+                  <div style={{ fontSize: 12, color: COLORS.textSecondary }}>ครบกำหนด: {e.dueDate}</div>
                 </div>
                 <span style={{ fontSize: 18 }}>📌</span>
               </div>
@@ -683,12 +679,12 @@ function Announcements({ user, announcements, onAdd, onDelete }) {
       {isTeacher && showForm && (
         <Card accent={COLORS.saffron} style={{ marginBottom: 24 }}>
           <div style={{ padding: 24 }}>
-            <h3 style={{ margin: "0 0 16px", color: COLORS.navy }}>✍️ เขียนประกาศใหม่</h3>
+            <h3 style={{ margin: "0 0 16px", color: COLORS.textPrimary }}>✍️ เขียนประกาศใหม่</h3>
             <Input label="หัวข้อประกาศ" value={subject} onChange={setSubject} placeholder="เช่น หยุดเรียนพิเศษ..." />
             <Textarea label="รายละเอียด" value={body} onChange={setBody} placeholder="เนื้อหาประกาศ..." />
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <input type="checkbox" id="pin" checked={pinned} onChange={e => setPinned(e.target.checked)} />
-              <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.navy, cursor: "pointer" }}>📌 ปักหมุดประกาศนี้</label>
+              <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.textPrimary, cursor: "pointer" }}>📌 ปักหมุดประกาศนี้</label>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <Button onClick={handlePost} variant="saffron" disabled={saving}>{saving ? "กำลังบันทึก..." : "โพสต์"}</Button>
@@ -703,7 +699,7 @@ function Announcements({ user, announcements, onAdd, onDelete }) {
           <div style={{ padding: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                {a.pinned && <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.saffron, letterSpacing: 1 }}>📌 ปักหมุด  </span>}
+                {a.pinned && <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.amber, letterSpacing: 1 }}>📌 ปักหมุด  </span>}
                 <h3 style={{ margin: "4px 0 8px", color: COLORS.textPrimary, fontSize: 17 }}>{a.subject}</h3>
                 <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 10 }}>{a.author} · {a.date}</div>
                 <p style={{ margin: 0, color: COLORS.textSecondary, lineHeight: 1.7 }}>{a.body}</p>
@@ -749,7 +745,7 @@ function Messages({ user, messages, onSend }) {
               return (
                 <div key={m.id} style={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", marginBottom: 16 }}>
                   <div style={{ maxWidth: "75%" }}>
-                    {!isMe && <div style={{ fontSize: 12, color: COLORS.slate, marginBottom: 4 }}>{m.from}</div>}
+                    {!isMe && <div style={{ fontSize: 12, color: COLORS.textSecondary, marginBottom: 4 }}>{m.from}</div>}
                     <div style={{
                       background: isMe ? COLORS.jade : COLORS.slateLight,
                       color: isMe ? COLORS.white : COLORS.navy,
@@ -759,7 +755,7 @@ function Messages({ user, messages, onSend }) {
                       {m.type === "broadcast" && <span style={{ fontSize: 11, fontWeight: 700, opacity: .8, display: "block", marginBottom: 2 }}>→ {m.to}</span>}
                       {m.text}
                     </div>
-                    <div style={{ fontSize: 11, color: COLORS.slate, marginTop: 4, textAlign: isMe ? "right" : "left" }}>{m.date}</div>
+                    <div style={{ fontSize: 11, color: COLORS.textSecondary, marginTop: 4, textAlign: isMe ? "right" : "left" }}>{m.date}</div>
                   </div>
                 </div>
               );
@@ -795,7 +791,7 @@ function Messages({ user, messages, onSend }) {
                 placeholder="พิมพ์ข้อความ..." style={{
                   flex: 1, border: `1.5px solid ${COLORS.slateLight}`, borderRadius: 10,
                   padding: "10px 14px", fontSize: 15, fontFamily: "inherit",
-                  background: COLORS.bg, color: COLORS.navy, outline: "none",
+                  background: COLORS.navyMid, color: COLORS.textPrimary, outline: "none",
                 }} />
               <Button onClick={handleSend} variant="jade" disabled={sending}>{sending ? "..." : "ส่ง ➤"}</Button>
             </div>
@@ -840,17 +836,17 @@ function ExerciseList({ user, exercises, onAdd, onDelete, submissions, onOpenExe
       {isTeacher && showForm && (
         <Card accent={COLORS.saffron} style={{ marginBottom: 24 }}>
           <div style={{ padding: 24 }}>
-            <h3 style={{ margin: "0 0 16px", color: COLORS.navy }}>📝 สร้างแบบฝึกหัดใหม่</h3>
+            <h3 style={{ margin: "0 0 16px", color: COLORS.textPrimary }}>📝 สร้างแบบฝึกหัดใหม่</h3>
             <Input label="ชื่อแบบฝึกหัด" value={title} onChange={setTitle} placeholder="เช่น แบบฝึกหัดคณิตศาสตร์ บทที่ 1" />
             <Textarea label="คำอธิบาย" value={description} onChange={setDescription} placeholder="รายละเอียดแบบฝึกหัด..." rows={2} />
             <Input label="วันครบกำหนด" value={dueDate} onChange={setDueDate} placeholder="เช่น 25 มิ.ย. 2568" />
-            <div style={{ fontWeight: 700, color: COLORS.navy, marginBottom: 12 }}>คำถาม (กรอกคำถามและเฉลย)</div>
+            <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 12 }}>คำถาม (กรอกคำถามและเฉลย)</div>
             {[0, 1, 2].map(i => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                 <input value={qTexts[i]} onChange={e => { const a = [...qTexts]; a[i] = e.target.value; setQTexts(a); }}
-                  placeholder={`คำถามที่ ${i + 1}`} style={{ border: `1.5px solid ${COLORS.slateLight}`, borderRadius: 8, padding: "8px 12px", fontSize: 14, fontFamily: "inherit", background: COLORS.bg, color: COLORS.navy, outline: "none" }} />
+                  placeholder={`คำถามที่ ${i + 1}`} style={{ border: `1.5px solid ${COLORS.glassBorder}`, borderRadius: 8, padding: "8px 12px", fontSize: 14, fontFamily: "inherit", background: COLORS.navyMid, color: COLORS.textPrimary, outline: "none" }} />
                 <input value={qAnswers[i]} onChange={e => { const a = [...qAnswers]; a[i] = e.target.value; setQAnswers(a); }}
-                  placeholder="เฉลย" style={{ border: `1.5px solid ${COLORS.slateLight}`, borderRadius: 8, padding: "8px 12px", fontSize: 14, fontFamily: "inherit", background: COLORS.bg, color: COLORS.navy, outline: "none" }} />
+                  placeholder="เฉลย" style={{ border: `1.5px solid ${COLORS.glassBorder}`, borderRadius: 8, padding: "8px 12px", fontSize: 14, fontFamily: "inherit", background: COLORS.navyMid, color: COLORS.textPrimary, outline: "none" }} />
               </div>
             ))}
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
@@ -869,14 +865,14 @@ function ExerciseList({ user, exercises, onAdd, onDelete, submissions, onOpenExe
               style={{ cursor: "pointer", transition: "transform .15s" }}
               onClick={() => !isTeacher && onOpenExercise(ex)}>
               <div style={{ padding: 20 }}>
-                <div style={{ fontSize: 12, color: COLORS.slate, marginBottom: 6 }}>{ex.subject} · {ex.author}</div>
-                <h3 style={{ margin: "0 0 8px", color: COLORS.navy, fontSize: 16 }}>{ex.title}</h3>
-                <p style={{ margin: "0 0 12px", color: COLORS.slate, fontSize: 14 }}>{ex.description}</p>
+                <div style={{ fontSize: 12, color: COLORS.textSecondary, marginBottom: 6 }}>{ex.subject} · {ex.author}</div>
+                <h3 style={{ margin: "0 0 8px", color: COLORS.textPrimary, fontSize: 16 }}>{ex.title}</h3>
+                <p style={{ margin: "0 0 12px", color: COLORS.textSecondary, fontSize: 14 }}>{ex.description}</p>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: COLORS.slate }}>📅 {ex.dueDate}</span>
+                  <span style={{ fontSize: 13, color: COLORS.textSecondary }}>📅 {ex.dueDate}</span>
                   {mySubmit
                     ? <span style={{ background: COLORS.greenLight, color: COLORS.green, fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>✅ {mySubmit.percentage}%</span>
-                    : <span style={{ background: COLORS.saffronLight, color: COLORS.navy, fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>ยังไม่ส่ง</span>}
+                    : <span style={{ background: COLORS.saffronLight, color: COLORS.amber, fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>ยังไม่ส่ง</span>}
                 </div>
                 {!isTeacher && !mySubmit && (
                   <Button onClick={e => { e.stopPropagation(); onOpenExercise(ex); }} variant="saffron" size="sm" style={{ marginTop: 12, width: "100%", justifyContent: "center" }}>ทำแบบฝึกหัด →</Button>
@@ -941,12 +937,12 @@ ${exercise.questions.map((q, i) => `
         <Card accent={result.percentage >= 70 ? COLORS.green : COLORS.red}>
           <div style={{ padding: 28, textAlign: "center" }}>
             <div style={{ fontSize: 64 }}>{result.percentage >= 80 ? "🌟" : result.percentage >= 60 ? "😊" : "💪"}</div>
-            <h2 style={{ color: COLORS.navy, fontSize: 28, margin: "12px 0 4px" }}>คะแนนของคุณ</h2>
+            <h2 style={{ color: COLORS.textPrimary, fontSize: 28, margin: "12px 0 4px" }}>คะแนนของคุณ</h2>
             <div style={{ fontSize: 56, fontWeight: 900, color: result.percentage >= 70 ? COLORS.green : COLORS.red, fontFamily: "monospace" }}>
               {result.percentage}%
             </div>
-            <div style={{ color: COLORS.slate, fontSize: 18, marginBottom: 8 }}>{result.totalScore} / {result.maxScore} ข้อ</div>
-            <div style={{ background: COLORS.bg, borderRadius: 12, padding: 16, marginTop: 16, color: COLORS.navy, lineHeight: 1.7 }}>
+            <div style={{ color: COLORS.textSecondary, fontSize: 18, marginBottom: 8 }}>{result.totalScore} / {result.maxScore} ข้อ</div>
+            <div style={{ background: COLORS.navyMid, borderRadius: 12, padding: 16, marginTop: 16, color: COLORS.textPrimary, lineHeight: 1.7 }}>
               {result.overallComment}
             </div>
           </div>
@@ -961,10 +957,10 @@ ${exercise.questions.map((q, i) => `
                   <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                     <span style={{ fontSize: 20 }}>{r.correct ? "✅" : "❌"}</span>
                     <div>
-                      <div style={{ fontWeight: 600, color: COLORS.navy, marginBottom: 4 }}>ข้อ {i + 1}: {q.text}</div>
-                      <div style={{ fontSize: 14, color: COLORS.slate }}>คำตอบของคุณ: <strong>{answers["q" + i] || "(ไม่ได้ตอบ)"}</strong></div>
+                      <div style={{ fontWeight: 600, color: COLORS.textPrimary, marginBottom: 4 }}>ข้อ {i + 1}: {q.text}</div>
+                      <div style={{ fontSize: 14, color: COLORS.textSecondary }}>คำตอบของคุณ: <strong>{answers["q" + i] || "(ไม่ได้ตอบ)"}</strong></div>
                       {!r.correct && <div style={{ fontSize: 14, color: COLORS.green, marginTop: 2 }}>เฉลย: <strong>{q.answer}</strong></div>}
-                      <div style={{ fontSize: 13, color: COLORS.slate, marginTop: 4, fontStyle: "italic" }}>{r.feedback}</div>
+                      <div style={{ fontSize: 13, color: COLORS.textSecondary, marginTop: 4, fontStyle: "italic" }}>{r.feedback}</div>
                     </div>
                   </div>
                 </div>
@@ -982,15 +978,15 @@ ${exercise.questions.map((q, i) => `
       <Card accent={COLORS.saffron} style={{ marginBottom: 20 }}>
         <div style={{ padding: 24 }}>
           <h2 style={{ color: COLORS.textPrimary, margin: "0 0 6px" }}>{exercise.title}</h2>
-          <div style={{ color: COLORS.slate, fontSize: 14 }}>👨‍🏫 {exercise.author} · 📅 ครบกำหนด {exercise.dueDate}</div>
-          {exercise.description && <p style={{ margin: "10px 0 0", color: COLORS.navy }}>{exercise.description}</p>}
+          <div style={{ color: COLORS.textSecondary, fontSize: 14 }}>👨‍🏫 {exercise.author} · 📅 ครบกำหนด {exercise.dueDate}</div>
+          {exercise.description && <p style={{ margin: "10px 0 0", color: COLORS.textPrimary }}>{exercise.description}</p>}
         </div>
       </Card>
 
       {exercise.questions.map((q, i) => (
         <Card key={i} style={{ marginBottom: 16 }}>
           <div style={{ padding: 20 }}>
-            <div style={{ fontWeight: 700, color: COLORS.navy, marginBottom: 12 }}>ข้อ {i + 1}. {q.text}</div>
+            <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 12 }}>ข้อ {i + 1}. {q.text}</div>
             {q.hint && <div style={{ fontSize: 13, color: COLORS.jade, marginBottom: 10 }}>💡 คำใบ้: {q.hint}</div>}
             <input
               value={answers["q" + i] || ""}
@@ -1000,7 +996,7 @@ ${exercise.questions.map((q, i) => `
                 width: "100%", boxSizing: "border-box",
                 border: `2px solid ${answers["q" + i] ? COLORS.jade : COLORS.slateLight}`,
                 borderRadius: 10, padding: "10px 14px", fontSize: 15,
-                fontFamily: "inherit", background: COLORS.bg, color: COLORS.navy,
+                fontFamily: "inherit", background: COLORS.navyMid, color: COLORS.textPrimary,
                 outline: "none", transition: "border .15s",
               }}
             />
@@ -1045,7 +1041,7 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
         <div>
           <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>📊 แดชบอร์ดคะแนนแบบฝึกหัด</h2>
-          <p style={{ color: COLORS.slate, margin: "6px 0 0", fontSize: 14 }}>
+          <p style={{ color: COLORS.textSecondary, margin: "6px 0 0", fontSize: 14 }}>
             รวบรวมผลการทำแบบฝึกหัดและรายชื่อนักเรียนที่ส่งงานแล้ว
           </p>
         </div>
@@ -1056,10 +1052,10 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
           <Card key={stat.label} accent={stat.color}>
             <div style={{ padding: 18 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <span style={{ color: COLORS.slate, fontSize: 13, fontWeight: 700 }}>{stat.label}</span>
+                <span style={{ color: COLORS.textSecondary, fontSize: 13, fontWeight: 700 }}>{stat.label}</span>
                 <span style={{ fontSize: 22 }}>{stat.icon}</span>
               </div>
-              <div style={{ color: COLORS.navy, fontSize: 28, fontWeight: 900, fontFamily: "monospace" }}>{stat.value}</div>
+              <div style={{ color: COLORS.textPrimary, fontSize: 28, fontWeight: 900, fontFamily: "monospace" }}>{stat.value}</div>
             </div>
           </Card>
         ))}
@@ -1068,9 +1064,9 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
       <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 20 }}>
         <Card>
           <div style={{ padding: 18 }}>
-            <h3 style={{ color: COLORS.navy, margin: "0 0 14px", fontSize: 16 }}>รายการแบบฝึกหัด</h3>
+            <h3 style={{ color: COLORS.textPrimary, margin: "0 0 14px", fontSize: 16 }}>รายการแบบฝึกหัด</h3>
             {myExercises.length === 0 ? (
-              <div style={{ color: COLORS.slate, fontSize: 14 }}>ยังไม่มีแบบฝึกหัดที่สร้างไว้</div>
+              <div style={{ color: COLORS.textSecondary, fontSize: 14 }}>ยังไม่มีแบบฝึกหัดที่สร้างไว้</div>
             ) : myExercises.map(ex => {
               const sentCount = submissions.filter(s => s.exerciseId === ex.id).length;
               return (
@@ -1079,12 +1075,12 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
                   padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
                   fontFamily: "inherit", marginBottom: 8,
                   background: selectedEx?.id === ex.id ? COLORS.saffronLight : COLORS.bg,
-                  color: COLORS.navy,
+                  color: COLORS.textPrimary,
                   fontWeight: selectedEx?.id === ex.id ? 800 : 600,
                   borderLeft: `4px solid ${selectedEx?.id === ex.id ? COLORS.saffron : COLORS.slateLight}`,
                 }}>
                   <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4 }}>{ex.title}</div>
-                  <div style={{ fontSize: 12, color: COLORS.slate, marginTop: 4 }}>{ex.subject} · ส่งแล้ว {sentCount} คน</div>
+                  <div style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 4 }}>{ex.subject} · ส่งแล้ว {sentCount} คน</div>
                 </button>
               );
             })}
@@ -1097,16 +1093,16 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
               <div style={{ padding: 22 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
                   <div>
-                    <h3 style={{ margin: "0 0 6px", color: COLORS.navy }}>{selectedEx.title}</h3>
-                    <div style={{ color: COLORS.slate, fontSize: 14 }}>{selectedEx.subject} · ครบกำหนด {selectedEx.dueDate}</div>
+                    <h3 style={{ margin: "0 0 6px", color: COLORS.textPrimary }}>{selectedEx.title}</h3>
+                    <div style={{ color: COLORS.textSecondary, fontSize: 14 }}>{selectedEx.subject} · ครบกำหนด {selectedEx.dueDate}</div>
                   </div>
                   <div style={{ display: "flex", gap: 10 }}>
                     <div style={{ background: COLORS.bg, borderRadius: 10, padding: "10px 14px", textAlign: "center", minWidth: 88 }}>
-                      <div style={{ color: COLORS.slate, fontSize: 12, fontWeight: 700 }}>ผู้ส่ง</div>
-                      <div style={{ color: COLORS.navy, fontSize: 20, fontWeight: 900 }}>{exSubs.length}</div>
+                      <div style={{ color: COLORS.textSecondary, fontSize: 12, fontWeight: 700 }}>ผู้ส่ง</div>
+                      <div style={{ color: COLORS.textPrimary, fontSize: 20, fontWeight: 900 }}>{exSubs.length}</div>
                     </div>
                     <div style={{ background: COLORS.bg, borderRadius: 10, padding: "10px 14px", textAlign: "center", minWidth: 88 }}>
-                      <div style={{ color: COLORS.slate, fontSize: 12, fontWeight: 700 }}>เฉลี่ย</div>
+                      <div style={{ color: COLORS.textSecondary, fontSize: 12, fontWeight: 700 }}>เฉลี่ย</div>
                       <div style={{ color: selectedAverage >= 70 ? COLORS.green : COLORS.red, fontSize: 20, fontWeight: 900 }}>{selectedAverage}%</div>
                     </div>
                   </div>
@@ -1116,9 +1112,9 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
 
             <Card>
               <div style={{ padding: 22 }}>
-                <h3 style={{ color: COLORS.navy, margin: "0 0 16px", fontSize: 16 }}>รายชื่อนักเรียนที่ทำแบบฝึกหัด</h3>
+                <h3 style={{ color: COLORS.textPrimary, margin: "0 0 16px", fontSize: 16 }}>รายชื่อนักเรียนที่ทำแบบฝึกหัด</h3>
                 {exSubs.length === 0 ? (
-                  <div style={{ padding: 32, textAlign: "center", color: COLORS.slate, background: COLORS.bg, borderRadius: 12 }}>
+                  <div style={{ padding: 32, textAlign: "center", color: COLORS.textSecondary, background: COLORS.bg, borderRadius: 12 }}>
                     ยังไม่มีนักเรียนส่งแบบฝึกหัดนี้
                   </div>
                 ) : (
@@ -1127,7 +1123,7 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
                       <thead>
                         <tr style={{ background: COLORS.bg }}>
                           {["นักเรียน", "วันที่ส่ง", "คะแนน", "เปอร์เซ็นต์", "สถานะ"].map(head => (
-                            <th key={head} style={{ textAlign: "left", padding: "12px 14px", color: COLORS.slate, fontSize: 13, fontWeight: 800 }}>
+                            <th key={head} style={{ textAlign: "left", padding: "12px 14px", color: COLORS.textSecondary, fontSize: 13, fontWeight: 800 }}>
                               {head}
                             </th>
                           ))}
@@ -1136,9 +1132,9 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
                       <tbody>
                         {exSubs.map(s => (
                           <tr key={s.id} style={{ borderBottom: `1px solid ${COLORS.slateLight}` }}>
-                            <td style={{ padding: "14px", color: COLORS.navy, fontWeight: 700 }}>{s.studentName}</td>
-                            <td style={{ padding: "14px", color: COLORS.slate, fontSize: 14 }}>{s.date}</td>
-                            <td style={{ padding: "14px", color: COLORS.navy, fontWeight: 700 }}>{s.score}/{s.maxScore}</td>
+                            <td style={{ padding: "14px", color: COLORS.textPrimary, fontWeight: 700 }}>{s.studentName}</td>
+                            <td style={{ padding: "14px", color: COLORS.textSecondary, fontSize: 14 }}>{s.date}</td>
+                            <td style={{ padding: "14px", color: COLORS.textPrimary, fontWeight: 700 }}>{s.score}/{s.maxScore}</td>
                             <td style={{ padding: "14px" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                 <div style={{ flex: 1, height: 8, background: COLORS.slateLight, borderRadius: 999, overflow: "hidden", minWidth: 90 }}>
@@ -1171,7 +1167,7 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
           </div>
         ) : (
           <Card>
-            <div style={{ padding: 40, textAlign: "center", color: COLORS.slate }}>
+            <div style={{ padding: 40, textAlign: "center", color: COLORS.textSecondary }}>
               เลือกแบบฝึกหัดเพื่อดูรายชื่อและคะแนน
             </div>
           </Card>
@@ -1188,7 +1184,7 @@ function MyScores({ user, submissions, exercises }) {
     <div>
       <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}>⭐ คะแนนของฉัน</h2>
       {mySubmissions.length === 0 ? (
-        <Card><div style={{ padding: 40, textAlign: "center", color: COLORS.slate }}>ยังไม่มีการส่งแบบฝึกหัด</div></Card>
+        <Card><div style={{ padding: 40, textAlign: "center", color: COLORS.textSecondary }}>ยังไม่มีการส่งแบบฝึกหัด</div></Card>
       ) : (
         mySubmissions.map(s => {
           const ex = exercises.find(e => e.id === s.exerciseId);
@@ -1196,8 +1192,8 @@ function MyScores({ user, submissions, exercises }) {
             <Card key={s.id} accent={s.percentage >= 70 ? COLORS.green : COLORS.red} style={{ marginBottom: 14 }}>
               <div style={{ padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ fontWeight: 700, color: COLORS.navy, fontSize: 16 }}>{ex?.title || "แบบฝึกหัด"}</div>
-                  <div style={{ fontSize: 13, color: COLORS.slate }}>{ex?.subject} · ส่ง: {s.date}</div>
+                  <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 16 }}>{ex?.title || "แบบฝึกหัด"}</div>
+                  <div style={{ fontSize: 13, color: COLORS.textSecondary }}>{ex?.subject} · ส่ง: {s.date}</div>
                   {s.comment && <div style={{ fontSize: 13, color: COLORS.jade, marginTop: 6, fontStyle: "italic" }}>💬 {s.comment}</div>}
                 </div>
                 <div style={{ textAlign: "center" }}>
@@ -1208,7 +1204,7 @@ function MyScores({ user, submissions, exercises }) {
                     fontWeight: 900, fontSize: 20, fontFamily: "monospace",
                     color: s.percentage >= 70 ? COLORS.green : COLORS.red,
                   }}>{s.percentage}%</div>
-                  <div style={{ fontSize: 12, color: COLORS.slate, marginTop: 4 }}>{s.score}/{s.maxScore}</div>
+                  <div style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 4 }}>{s.score}/{s.maxScore}</div>
                 </div>
               </div>
             </Card>
@@ -1291,7 +1287,7 @@ function Settings({ user, onSave }) {
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 280px", gap: 20 }}>
         <Card accent={isTeacher ? COLORS.saffron : COLORS.jade}>
           <div style={{ padding: 24 }}>
-            <h3 style={{ color: COLORS.navy, margin: "0 0 18px", fontSize: 18 }}>
+            <h3 style={{ color: COLORS.textPrimary, margin: "0 0 18px", fontSize: 18 }}>
               {isTeacher ? "ข้อมูลครู" : "ข้อมูลนักเรียนนักศึกษา"}
             </h3>
 
@@ -1337,21 +1333,21 @@ function Settings({ user, onSave }) {
           <div style={{ padding: 22 }}>
             <div style={{
               width: 58, height: 58, borderRadius: "50%",
-              background: isTeacher ? COLORS.saffron : COLORS.jade,
+              background: isTeacher ? G.amber : G.emerald,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 24, fontWeight: 800, color: isTeacher ? COLORS.navy : COLORS.white,
               marginBottom: 14,
             }}>
               {(firstName || user.name).charAt(0)}
             </div>
-            <div style={{ color: COLORS.navy, fontWeight: 800, fontSize: 18, lineHeight: 1.35 }}>
+            <div style={{ color: COLORS.textPrimary, fontWeight: 800, fontSize: 18, lineHeight: 1.35 }}>
               {`${firstName} ${lastName}`.trim() || user.name}
             </div>
             <div style={{ marginTop: 8 }}><RoleBadge role={user.role} /></div>
-            <div style={{ marginTop: 18, color: COLORS.slate, fontSize: 14, lineHeight: 1.8 }}>
-              <div><strong style={{ color: COLORS.navy }}>แผนก:</strong> {department || "-"}</div>
-              {!isTeacher && <div><strong style={{ color: COLORS.navy }}>ระดับชั้น:</strong> {level || "-"}</div>}
-              {isTeacher && <div><strong style={{ color: COLORS.navy }}>วิชา:</strong> {user.subject || "-"}</div>}
+            <div style={{ marginTop: 18, color: COLORS.textSecondary, fontSize: 14, lineHeight: 1.8 }}>
+              <div><strong style={{ color: COLORS.textPrimary }}>แผนก:</strong> {department || "-"}</div>
+              {!isTeacher && <div><strong style={{ color: COLORS.textPrimary }}>ระดับชั้น:</strong> {level || "-"}</div>}
+              {isTeacher && <div><strong style={{ color: COLORS.textPrimary }}>วิชา:</strong> {user.subject || "-"}</div>}
             </div>
           </div>
         </Card>
@@ -1533,7 +1529,7 @@ export default function App() {
         {/* Background grid */}
         <div style={{
           position:"fixed", inset:0, zIndex:0, pointerEvents:"none", marginLeft:260,
-          backgroundImage:`linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)`,
+          backgroundImage:`linear-gradient(rgba(148,163,184,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,0.04) 1px,transparent 1px)`,
           backgroundSize:"40px 40px",
         }} />
         <div style={{ position:"relative", zIndex:1 }}>
