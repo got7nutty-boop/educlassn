@@ -25,17 +25,18 @@ const COLORS = {
 };
 
 // ── Mock data ──────────────────────────────────────────────────────────────
-//const USERS = {
- // teacher: [
-//    { id: "t1", name: "อาจารย์สมชาย ใจดี", role: "teacher", subject: "คณิตศาสตร์", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher1", password: "1234" },
- //   { id: "t2", name: "อาจารย์สุมาลี รักเรียนดี", role: "teacher", subject: "ภาษาไทย", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher2", password: "1234" },
- // ],
-//  student: [
- //   { id: "s1", name: "นายกิตติ มานะ", role: "student", department: "แผนกวิชาคอมพิวเตอร์ธุรกิจ", level: "ปวช.1", class: "ปวช.1/1", username: "student1", password: "1234" },
- //   { id: "s2", name: "นางสาวนิดา สุขใจ", role: "student", department: "แผนกวิชาการบัญชี", level: "ปวช.1", class: "ปวช.1/1", username: "student2", password: "1234" },
- //   { id: "s3", name: "นายภูมิ วิชาดี", role: "student", department: "แผนกวิชาเทคโนโลยีสารสนเทศ", level: "ปวช.2", class: "ปวช.2/1", username: "student3", password: "1234" },
-//  ],
-//};
+// eslint-disable-next-line no-unused-vars
+const USERS = {
+  teacher: [
+    { id: "t1", name: "อาจารย์สมชาย ใจดี", role: "teacher", subject: "คณิตศาสตร์", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher1", password: "1234" },
+    { id: "t2", name: "อาจารย์สุมาลี รักเรียนดี", role: "teacher", subject: "ภาษาไทย", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher2", password: "1234" },
+  ],
+  student: [
+    { id: "s1", name: "นายกิตติ มานะ", role: "student", department: "แผนกวิชาคอมพิวเตอร์ธุรกิจ", level: "ปวช.1", class: "ปวช.1/1", username: "student1", password: "1234" },
+    { id: "s2", name: "นางสาวนิดา สุขใจ", role: "student", department: "แผนกวิชาการบัญชี", level: "ปวช.1", class: "ปวช.1/1", username: "student2", password: "1234" },
+    { id: "s3", name: "นายภูมิ วิชาดี", role: "student", department: "แผนกวิชาเทคโนโลยีสารสนเทศ", level: "ปวช.2", class: "ปวช.2/1", username: "student3", password: "1234" },
+  ],
+};
 
 const INITIAL_ANNOUNCEMENTS = [
   { id: "a1", author: "อาจารย์สมชาย ใจดี", authorId: "t1", subject: "📢 หยุดเรียนวันพรุ่งนี้", body: "เนื่องจากมีกิจกรรมวันไหว้ครู นักเรียนทุกคนหยุดเรียนในวันพรุ่งนี้ค่ะ/ครับ", date: "15 มิ.ย. 2568", pinned: true },
@@ -117,6 +118,35 @@ const loadUserProfile = async (authUser) => {
   if (error || !data) return null;
   return profileToUser(data, authUser);
 };
+
+
+// ── Supabase Data Helpers ──────────────────────────────────────────────────
+
+const formatDate = (iso) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
+};
+
+const dbToAnnouncement = (r) => ({
+  id: r.id, author: r.author_name, authorId: r.author_id,
+  subject: r.subject, body: r.body, pinned: r.pinned,
+  date: formatDate(r.created_at),
+});
+
+const dbToExercise = (r) => ({
+  id: r.id, title: r.title, subject: r.subject,
+  author: r.author_name, authorId: r.author_id,
+  dueDate: r.due_date, description: r.description,
+  questions: r.questions || [],
+});
+
+const dbToSubmission = (r) => ({
+  id: r.id, exerciseId: r.exercise_id,
+  studentId: r.student_id, studentName: r.student_name,
+  answers: r.answers || {}, score: r.score, maxScore: r.max_score,
+  percentage: r.percentage, comment: r.comment,
+  results: r.results || [], date: formatDate(r.created_at),
+});
 
 // ── Components ─────────────────────────────────────────────────────────────
 
@@ -488,24 +518,23 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
 }
 
 // ── Announcements ──────────────────────────────────────────────────────────
-function Announcements({ user, announcements, setAnnouncements }) {
+function Announcements({ user, announcements, onAdd, onDelete }) {
   const isTeacher = user.role === "teacher";
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [pinned, setPinned] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handlePost = () => {
+  const handlePost = async () => {
     if (!subject.trim() || !body.trim()) return;
-    const newAnn = {
-      id: "a" + Date.now(), author: user.name, authorId: user.id,
-      subject, body, date: "วันนี้", pinned,
-    };
-    setAnnouncements([newAnn, ...announcements]);
+    setSaving(true);
+    await onAdd({ author: user.name, authorId: user.id, subject, body, pinned });
     setSubject(""); setBody(""); setPinned(false); setShowForm(false);
+    setSaving(false);
   };
 
-  const handleDelete = (id) => setAnnouncements(announcements.filter(a => a.id !== id));
+  const handleDelete = (id) => onDelete(id);
 
   return (
     <div>
@@ -525,7 +554,7 @@ function Announcements({ user, announcements, setAnnouncements }) {
               <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.navy, cursor: "pointer" }}>📌 ปักหมุดประกาศนี้</label>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <Button onClick={handlePost} variant="saffron">โพสต์</Button>
+              <Button onClick={handlePost} variant="saffron" disabled={saving}>{saving ? "กำลังบันทึก..." : "โพสต์"}</Button>
               <Button onClick={() => setShowForm(false)} variant="ghost">ยกเลิก</Button>
             </div>
           </div>
@@ -644,7 +673,7 @@ function Messages({ user, messages, setMessages }) {
 }
 
 // ── Exercises list ─────────────────────────────────────────────────────────
-function ExerciseList({ user, exercises, setExercises, submissions, setSubmissions, onOpenExercise }) {
+function ExerciseList({ user, exercises, onAdd, onDelete, submissions, onOpenExercise }) {
   const isTeacher = user.role === "teacher";
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
@@ -652,18 +681,19 @@ function ExerciseList({ user, exercises, setExercises, submissions, setSubmissio
   const [dueDate, setDueDate] = useState("");
   const [qTexts, setQTexts] = useState(["", "", ""]);
   const [qAnswers, setQAnswers] = useState(["", "", ""]);
+  const [saving, setSaving] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!title.trim()) return;
+    setSaving(true);
     const questions = qTexts.map((t, i) => ({ id: "q" + (i + 1), text: t, answer: qAnswers[i], hint: "" })).filter(q => q.text.trim());
-    const ex = {
-      id: "ex" + Date.now(), title, description, dueDate,
+    await onAdd({
+      title, description, dueDate,
       subject: user.subject, author: user.name, authorId: user.id, questions,
-    };
-    setExercises([...exercises, ex]);
+    });
     setTitle(""); setDescription(""); setDueDate("");
     setQTexts(["", "", ""]); setQAnswers(["", "", ""]);
-    setShowForm(false);
+    setShowForm(false); setSaving(false);
   };
 
   return (
@@ -690,7 +720,7 @@ function ExerciseList({ user, exercises, setExercises, submissions, setSubmissio
               </div>
             ))}
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-              <Button onClick={handleCreate} variant="saffron">บันทึก</Button>
+              <Button onClick={handleCreate} variant="saffron" disabled={saving}>{saving ? "กำลังบันทึก..." : "บันทึก"}</Button>
               <Button onClick={() => setShowForm(false)} variant="ghost">ยกเลิก</Button>
             </div>
           </div>
@@ -716,6 +746,9 @@ function ExerciseList({ user, exercises, setExercises, submissions, setSubmissio
                 </div>
                 {!isTeacher && !mySubmit && (
                   <Button onClick={e => { e.stopPropagation(); onOpenExercise(ex); }} variant="saffron" size="sm" style={{ marginTop: 12, width: "100%", justifyContent: "center" }}>ทำแบบฝึกหัด →</Button>
+                )}
+                {isTeacher && ex.authorId === user.id && (
+                  <Button onClick={e => { e.stopPropagation(); if(window.confirm("ลบแบบฝึกหัดนี้?")) onDelete(ex.id); }} variant="danger" size="sm" style={{ marginTop: 12, width: "100%", justifyContent: "center" }}>🗑 ลบแบบฝึกหัด</Button>
                 )}
               </div>
             </Card>
@@ -849,7 +882,7 @@ ${exercise.questions.map((q, i) => `
 }
 
 // ── Results (teacher) ──────────────────────────────────────────────────────
-function Results({ user, exercises, submissions }) {
+function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExercise }) {
   const myExercises = exercises.filter(e => e.authorId === user.id);
   const myExerciseIds = myExercises.map(ex => ex.id);
   const teacherSubmissions = submissions.filter(s => myExerciseIds.includes(s.exerciseId));
@@ -1191,53 +1224,110 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [page, setPage] = useState("dashboard");
-  const [announcements, setAnnouncements] = useState(INITIAL_ANNOUNCEMENTS);
-  const [exercises, setExercises] = useState(INITIAL_EXERCISES);
+  const [announcements, setAnnouncements] = useState([]);
+  const [exercises, setExercises] = useState([]);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [submissions, setSubmissions] = useState([]);
   const [activeExercise, setActiveExercise] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // ── Restore session on page reload ──────────────────────────────────────
+  // ── Load data from Supabase ──────────────────────────────────────────────
+  const loadData = async () => {
+    if (!supabase) return;
+    const [annRes, exRes, subRes] = await Promise.all([
+      supabase.from("announcements").select("*").order("created_at", { ascending: false }),
+      supabase.from("exercises").select("*").order("created_at", { ascending: false }),
+      supabase.from("submissions").select("*").order("created_at", { ascending: false }),
+    ]);
+    if (annRes.data) setAnnouncements(annRes.data.map(dbToAnnouncement));
+    if (exRes.data) setExercises(exRes.data.map(dbToExercise));
+    if (subRes.data) setSubmissions(subRes.data.map(dbToSubmission));
+  };
+
+  // ── Auth session ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!supabase) { setAuthLoading(false); return; }
-
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const profile = await loadUserProfile(session.user);
-        if (profile) setUser(profile);
+        if (profile) { setUser(profile); await loadData(); }
       }
       setAuthLoading(false);
     });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         const profile = await loadUserProfile(session.user);
-        if (profile) setUser(profile);
+        if (profile) { setUser(profile); await loadData(); }
       } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        setPage("dashboard");
-        setActiveExercise(null);
+        setUser(null); setPage("dashboard"); setActiveExercise(null);
+        setAnnouncements([]); setExercises([]); setSubmissions([]);
       }
     });
-
     return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogout = async () => {
     if (supabase) await supabase.auth.signOut();
-    setUser(null);
-    setActiveExercise(null);
-    setPage("dashboard");
+    setUser(null); setActiveExercise(null); setPage("dashboard");
   };
 
-  const handleSubmitExercise = (exId, answers, score, maxScore, percentage, comment, results) => {
+  // ── Announcements CRUD ────────────────────────────────────────────────────
+  const handleAddAnnouncement = async (ann) => {
+    if (!supabase) return;
+    const { data, error } = await supabase.from("announcements").insert([{
+      author_id: ann.authorId, author_name: ann.author,
+      subject: ann.subject, body: ann.body, pinned: ann.pinned,
+    }]).select().single();
+    if (!error && data) setAnnouncements(prev => [dbToAnnouncement(data), ...prev]);
+  };
+
+  const handleDeleteAnnouncement = async (id) => {
+    if (!supabase) return;
+    await supabase.from("announcements").delete().eq("id", id);
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+  };
+
+  // ── Exercises CRUD ────────────────────────────────────────────────────────
+  const handleAddExercise = async (ex) => {
+    if (!supabase) return;
+    const { data, error } = await supabase.from("exercises").insert([{
+      author_id: ex.authorId, author_name: ex.author,
+      title: ex.title, subject: ex.subject,
+      description: ex.description, due_date: ex.dueDate,
+      questions: ex.questions,
+    }]).select().single();
+    if (!error && data) setExercises(prev => [dbToExercise(data), ...prev]);
+  };
+
+  const handleDeleteExercise = async (id) => {
+    if (!supabase) return;
+    await supabase.from("exercises").delete().eq("id", id);
+    setExercises(prev => prev.filter(e => e.id !== id));
+    setSubmissions(prev => prev.filter(s => s.exerciseId !== id));
+  };
+
+  // ── Submissions ───────────────────────────────────────────────────────────
+  const handleSubmitExercise = async (exId, answers, score, maxScore, percentage, comment, results) => {
+    const newSub = {
+      exercise_id: exId, student_id: user.id, student_name: user.name,
+      answers, score, max_score: maxScore, percentage, comment, results,
+    };
+    if (supabase) {
+      const { data, error } = await supabase.from("submissions").insert([newSub]).select().single();
+      if (!error && data) { setSubmissions(prev => [...prev, dbToSubmission(data)]); return; }
+    }
     setSubmissions(prev => [...prev, {
       id: "sub" + Date.now(), exerciseId: exId,
       studentId: user.id, studentName: user.name,
-      answers, score, maxScore, percentage, comment,
-      date: "วันนี้", results,
+      answers, score, maxScore, percentage, comment, results, date: "วันนี้",
     }]);
+  };
+
+  const handleDeleteSubmission = async (id) => {
+    if (!supabase) return;
+    await supabase.from("submissions").delete().eq("id", id);
+    setSubmissions(prev => prev.filter(s => s.id !== id));
   };
 
   if (authLoading) return (
@@ -1250,7 +1340,7 @@ export default function App() {
     </div>
   );
 
-  if (!user) return <LoginScreen onLogin={u => { setUser(u); setPage("dashboard"); }} />;
+  if (!user) return <LoginScreen onLogin={u => { setUser(u); setPage("dashboard"); loadData(); }} />;
 
   const isTeacher = user.role === "teacher";
 
@@ -1274,14 +1364,16 @@ export default function App() {
             submissions={submissions} messages={messages} setPage={setPage} />
         )}
         {page === "announcements" && !activeExercise && (
-          <Announcements user={user} announcements={announcements} setAnnouncements={setAnnouncements} />
+          <Announcements user={user} announcements={announcements}
+            onAdd={handleAddAnnouncement} onDelete={handleDeleteAnnouncement} />
         )}
         {page === "messages" && !activeExercise && (
           <Messages user={user} messages={messages} setMessages={setMessages} />
         )}
         {page === "exercises" && !activeExercise && (
-          <ExerciseList user={user} exercises={exercises} setExercises={setExercises}
-            submissions={submissions} setSubmissions={setSubmissions}
+          <ExerciseList user={user} exercises={exercises}
+            onAdd={handleAddExercise} onDelete={handleDeleteExercise}
+            submissions={submissions}
             onOpenExercise={ex => setActiveExercise(ex)} />
         )}
         {page === "exercises" && activeExercise && (
@@ -1290,7 +1382,8 @@ export default function App() {
             onBack={() => setActiveExercise(null)} />
         )}
         {page === "results" && isTeacher && (
-          <Results user={user} exercises={exercises} submissions={submissions} />
+          <Results user={user} exercises={exercises} submissions={submissions}
+            onDeleteSubmission={handleDeleteSubmission} onDeleteExercise={handleDeleteExercise} />
         )}
         {page === "myscores" && !isTeacher && (
           <MyScores user={user} submissions={submissions} exercises={exercises} />
