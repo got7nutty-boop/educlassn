@@ -7,21 +7,72 @@ import { supabase, isSupabaseConfigured } from "./supabaseClient";
 // Type: system-ui body, heavier weights for display, mono for scores/numbers
 // Signature: colour-coded role "badge bar" along the top edge of every card
 
+// ── AI-Era Design System ─────────────────────────────────────────────────
 const COLORS = {
-  navy: "#0F1B3C",
-  navyLight: "#1A2E5A",
-  saffron: "#F5A623",
-  saffronLight: "#FDE8B8",
-  jade: "#3DBCA1",
-  jadeLight: "#C8EEE8",
-  bg: "#F7F4EE",
+  // Deep space base
+  navy: "#070B14",
+  navyLight: "#0D1526",
+  navyMid: "#111C35",
+
+  // Neon accents
+  cyan: "#00D4FF",
+  cyanDim: "#00A8CC",
+  cyanGlow: "rgba(0,212,255,0.15)",
+  cyanBorder: "rgba(0,212,255,0.3)",
+
+  violet: "#7C3AED",
+  violetLight: "#A78BFA",
+  violetGlow: "rgba(124,58,237,0.2)",
+
+  emerald: "#10B981",
+  emeraldLight: "#34D399",
+  emeraldGlow: "rgba(16,185,129,0.15)",
+
+  amber: "#F59E0B",
+  amberLight: "#FCD34D",
+  amberGlow: "rgba(245,158,11,0.15)",
+
+  // Glass surfaces
+  glass: "rgba(255,255,255,0.04)",
+  glassBorder: "rgba(255,255,255,0.08)",
+  glassBorderBright: "rgba(255,255,255,0.15)",
+  glassMid: "rgba(255,255,255,0.07)",
+
+  // Text
   white: "#FFFFFF",
-  slate: "#5C6B8A",
-  slateLight: "#E8ECF4",
-  red: "#E84C4C",
-  redLight: "#FDEAEA",
-  green: "#27AE60",
-  greenLight: "#D4EDDA",
+  textPrimary: "#F0F4FF",
+  textSecondary: "#8B9DC3",
+  textMuted: "#4A5A7A",
+
+  // Status
+  red: "#EF4444",
+  redGlow: "rgba(239,68,68,0.15)",
+  green: "#10B981",
+  greenGlow: "rgba(16,185,129,0.15)",
+
+  // Legacy aliases (keep for backward compat)
+  saffron: "#F59E0B",
+  saffronLight: "rgba(245,158,11,0.15)",
+  jade: "#10B981",
+  jadeLight: "rgba(16,185,129,0.12)",
+  bg: "#070B14",
+  slate: "#8B9DC3",
+  slateLight: "rgba(139,157,195,0.12)",
+  redLight: "rgba(239,68,68,0.12)",
+  greenLight: "rgba(16,185,129,0.12)",
+};
+
+// Gradient presets
+const G = {
+  cyan: "linear-gradient(135deg, #00D4FF, #7C3AED)",
+  emerald: "linear-gradient(135deg, #10B981, #00D4FF)",
+  amber: "linear-gradient(135deg, #F59E0B, #EF4444)",
+  violet: "linear-gradient(135deg, #7C3AED, #EC4899)",
+  mesh: `radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.12) 0%, transparent 60%),
+         radial-gradient(ellipse at 80% 20%, rgba(0,212,255,0.10) 0%, transparent 50%),
+         radial-gradient(ellipse at 60% 80%, rgba(16,185,129,0.08) 0%, transparent 50%),
+         #070B14`,
+  sidebarBg: `linear-gradient(180deg, #0A0F1E 0%, #070B14 100%)`,
 };
 
 // ── Data helpers ─────────────────────────────────────────────────────────
@@ -108,26 +159,42 @@ function RoleBadge({ role }) {
   const isTeacher = role === "teacher";
   return (
     <span style={{
-      background: isTeacher ? COLORS.saffron : COLORS.jade,
-      color: isTeacher ? COLORS.navy : COLORS.white,
-      fontSize: 11, fontWeight: 700, letterSpacing: 1,
-      padding: "2px 10px", borderRadius: 20, textTransform: "uppercase",
+      background: isTeacher
+        ? "linear-gradient(135deg,#F59E0B,#EF4444)"
+        : "linear-gradient(135deg,#10B981,#00D4FF)",
+      color: COLORS.white,
+      fontSize: 10, fontWeight: 800, letterSpacing: 1.5,
+      padding: "3px 10px", borderRadius: 20, textTransform: "uppercase",
+      boxShadow: isTeacher ? "0 0 12px rgba(245,158,11,0.4)" : "0 0 12px rgba(16,185,129,0.4)",
     }}>
       {isTeacher ? "ครู" : "นักเรียน"}
     </span>
   );
 }
 
-function Card({ children, style, accent }) {
+function Card({ children, style, accent, glow }) {
   return (
     <div style={{
-      background: COLORS.white,
-      borderRadius: 16,
-      boxShadow: "0 2px 12px rgba(15,27,60,0.08)",
+      background: COLORS.glass,
+      backdropFilter: "blur(16px)",
+      WebkitBackdropFilter: "blur(16px)",
+      borderRadius: 20,
+      border: `1px solid ${glow ? COLORS.glassBorderBright : COLORS.glassBorder}`,
+      boxShadow: glow
+        ? `0 0 40px ${glow}, 0 8px 32px rgba(0,0,0,0.4)`
+        : "0 8px 32px rgba(0,0,0,0.3)",
       overflow: "hidden",
+      position: "relative",
+      transition: "all 0.3s ease",
       ...style,
     }}>
-      {accent && <div style={{ height: 4, background: accent }} />}
+      {accent && (
+        <div style={{
+          height: 3,
+          background: accent,
+          boxShadow: `0 0 12px ${accent}`,
+        }} />
+      )}
       {children}
     </div>
   );
@@ -135,20 +202,44 @@ function Card({ children, style, accent }) {
 
 function Button({ children, onClick, variant = "primary", size = "md", disabled, style }) {
   const base = {
-    border: "none", cursor: disabled ? "not-allowed" : "pointer",
-    borderRadius: 10, fontWeight: 600, transition: "all .18s",
+    border: "1px solid transparent",
+    cursor: disabled ? "not-allowed" : "pointer",
+    borderRadius: 12, fontWeight: 700, transition: "all 0.2s ease",
     fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6,
-    opacity: disabled ? 0.55 : 1,
-    fontSize: size === "sm" ? 13 : 15,
+    opacity: disabled ? 0.45 : 1,
+    fontSize: size === "sm" ? 12 : 14,
     padding: size === "sm" ? "6px 14px" : "10px 22px",
+    letterSpacing: "0.3px",
+    position: "relative",
+    overflow: "hidden",
     ...style,
   };
   const variants = {
-    primary: { background: COLORS.navy, color: COLORS.white },
-    saffron: { background: COLORS.saffron, color: COLORS.navy },
-    jade: { background: COLORS.jade, color: COLORS.white },
-    ghost: { background: COLORS.slateLight, color: COLORS.navy },
-    danger: { background: COLORS.red, color: COLORS.white },
+    primary: {
+      background: G.cyan, color: COLORS.white,
+      boxShadow: "0 0 20px rgba(0,212,255,0.3)",
+      borderColor: "transparent",
+    },
+    saffron: {
+      background: G.amber, color: COLORS.white,
+      boxShadow: "0 0 20px rgba(245,158,11,0.3)",
+      borderColor: "transparent",
+    },
+    jade: {
+      background: G.emerald, color: COLORS.white,
+      boxShadow: "0 0 20px rgba(16,185,129,0.3)",
+      borderColor: "transparent",
+    },
+    ghost: {
+      background: COLORS.glass, color: COLORS.textSecondary,
+      border: `1px solid ${COLORS.glassBorder}`,
+      backdropFilter: "blur(8px)",
+    },
+    danger: {
+      background: "linear-gradient(135deg,#EF4444,#DC2626)", color: COLORS.white,
+      boxShadow: "0 0 20px rgba(239,68,68,0.3)",
+      borderColor: "transparent",
+    },
   };
   return <button style={{ ...base, ...variants[variant] }} onClick={onClick} disabled={disabled}>{children}</button>;
 }
@@ -156,19 +247,30 @@ function Button({ children, onClick, variant = "primary", size = "md", disabled,
 function Input({ label, value, onChange, type = "text", placeholder }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      {label && <label style={{ display: "block", fontWeight: 600, color: COLORS.navy, marginBottom: 6, fontSize: 14 }}>{label}</label>}
+      {label && <label style={{ display: "block", fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6, fontSize: 13, letterSpacing: "0.5px", textTransform: "uppercase" }}>{label}</label>}
       <input
         type={type} value={value} onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         style={{
           width: "100%", boxSizing: "border-box",
-          border: `1.5px solid ${COLORS.slateLight}`, borderRadius: 10,
-          padding: "10px 14px", fontSize: 15, fontFamily: "inherit",
-          background: COLORS.bg, color: COLORS.navy,
-          outline: "none", transition: "border .15s",
+          border: `1px solid ${COLORS.glassBorder}`,
+          borderRadius: 12,
+          padding: "11px 16px", fontSize: 14, fontFamily: "inherit",
+          background: "rgba(255,255,255,0.05)",
+          color: COLORS.textPrimary,
+          outline: "none", transition: "all 0.2s ease",
+          backdropFilter: "blur(8px)",
         }}
-        onFocus={e => e.target.style.borderColor = COLORS.saffron}
-        onBlur={e => e.target.style.borderColor = COLORS.slateLight}
+        onFocus={e => {
+          e.target.style.borderColor = COLORS.cyan;
+          e.target.style.boxShadow = `0 0 0 3px ${COLORS.cyanGlow}`;
+          e.target.style.background = "rgba(255,255,255,0.07)";
+        }}
+        onBlur={e => {
+          e.target.style.borderColor = COLORS.glassBorder;
+          e.target.style.boxShadow = "none";
+          e.target.style.background = "rgba(255,255,255,0.05)";
+        }}
       />
     </div>
   );
@@ -177,16 +279,25 @@ function Input({ label, value, onChange, type = "text", placeholder }) {
 function Textarea({ label, value, onChange, placeholder, rows = 4 }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      {label && <label style={{ display: "block", fontWeight: 600, color: COLORS.navy, marginBottom: 6, fontSize: 14 }}>{label}</label>}
+      {label && <label style={{ display: "block", fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6, fontSize: 13, letterSpacing: "0.5px", textTransform: "uppercase" }}>{label}</label>}
       <textarea
         value={value} onChange={e => onChange(e.target.value)}
         placeholder={placeholder} rows={rows}
         style={{
           width: "100%", boxSizing: "border-box",
-          border: `1.5px solid ${COLORS.slateLight}`, borderRadius: 10,
-          padding: "10px 14px", fontSize: 15, fontFamily: "inherit",
-          background: COLORS.bg, color: COLORS.navy, resize: "vertical",
-          outline: "none",
+          border: `1px solid ${COLORS.glassBorder}`, borderRadius: 12,
+          padding: "11px 16px", fontSize: 14, fontFamily: "inherit",
+          background: "rgba(255,255,255,0.05)",
+          color: COLORS.textPrimary, resize: "vertical",
+          outline: "none", transition: "all 0.2s ease",
+        }}
+        onFocus={e => {
+          e.target.style.borderColor = COLORS.cyan;
+          e.target.style.boxShadow = `0 0 0 3px ${COLORS.cyanGlow}`;
+        }}
+        onBlur={e => {
+          e.target.style.borderColor = COLORS.glassBorder;
+          e.target.style.boxShadow = "none";
         }}
       />
     </div>
@@ -242,59 +353,71 @@ function LoginScreen({ onLogin }) {
 
   return (
     <div style={{
-      minHeight: "100vh", background: `linear-gradient(135deg, ${COLORS.navy} 0%, ${COLORS.navyLight} 60%, #223A70 100%)`,
+      minHeight: "100vh",
+      background: G.mesh,
       display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+      position: "relative", overflow: "hidden",
     }}>
-      <div style={{ width: "100%", maxWidth: 420 }}>
+      {/* Ambient orbs */}
+      <div style={{ position:"absolute", width:600, height:600, borderRadius:"50%", background:"radial-gradient(circle,rgba(124,58,237,0.08),transparent 70%)", top:-200, right:-200, pointerEvents:"none" }} />
+      <div style={{ position:"absolute", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,212,255,0.07),transparent 70%)", bottom:-100, left:-100, pointerEvents:"none" }} />
+
+      <div style={{ width: "100%", maxWidth: 440, position: "relative", zIndex: 1 }}>
         {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: 36 }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{
-            width: 72, height: 72, borderRadius: 20,
-            background: COLORS.saffron, margin: "0 auto 16px",
+            width: 80, height: 80, borderRadius: 24,
+            background: G.cyan,
+            margin: "0 auto 20px",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 36, boxShadow: "0 8px 32px rgba(245,166,35,0.35)",
+            fontSize: 38,
+            boxShadow: "0 0 40px rgba(0,212,255,0.4), 0 20px 40px rgba(0,0,0,0.4)",
           }}>🏫</div>
-          <h1 style={{ color: COLORS.white, fontSize: 28, fontWeight: 800, margin: 0 }}>EduClass</h1>
-          <p style={{ color: COLORS.slate, margin: "6px 0 0", fontSize: 15 }}>ระบบจัดการการเรียนการสอน</p>
+          <h1 style={{ color: COLORS.white, fontSize: 32, fontWeight: 900, margin: 0, letterSpacing: "-0.5px" }}>EduClass</h1>
+          <p style={{ color: COLORS.textMuted, margin: "8px 0 0", fontSize: 14, letterSpacing: "1px", textTransform: "uppercase" }}>ระบบจัดการการเรียนการสอน</p>
         </div>
 
-        <Card accent={role === "teacher" ? COLORS.saffron : COLORS.jade}>
-          <div style={{ padding: 32 }}>
+        <Card accent={role === "teacher" ? G.amber : G.emerald} glow={role === "teacher" ? "rgba(245,158,11,0.15)" : "rgba(16,185,129,0.15)"}>
+          <div style={{ padding: 36 }}>
             {/* Role toggle */}
             <div style={{
-              display: "flex", background: COLORS.slateLight,
-              borderRadius: 12, padding: 4, marginBottom: 28,
+              display: "flex", background: "rgba(255,255,255,0.04)",
+              borderRadius: 14, padding: 5, marginBottom: 32,
+              border: `1px solid ${COLORS.glassBorder}`,
             }}>
               {["student", "teacher"].map(r => (
                 <button key={r} onClick={() => { setRole(r); setError(""); setUsername(""); setPassword(""); }}
                   style={{
-                    flex: 1, padding: "9px 0", border: "none", cursor: "pointer",
-                    borderRadius: 9, fontWeight: 700, fontSize: 14, fontFamily: "inherit",
-                    transition: "all .2s",
-                    background: role === r ? (r === "teacher" ? COLORS.saffron : COLORS.jade) : "transparent",
-                    color: role === r ? (r === "teacher" ? COLORS.navy : COLORS.white) : COLORS.slate,
-                    boxShadow: role === r ? "0 2px 8px rgba(0,0,0,0.12)" : "none",
+                    flex: 1, padding: "10px 0", border: "none", cursor: "pointer",
+                    borderRadius: 10, fontWeight: 700, fontSize: 13, fontFamily: "inherit",
+                    transition: "all 0.25s ease",
+                    background: role === r
+                      ? (r === "teacher" ? G.amber : G.emerald)
+                      : "transparent",
+                    color: COLORS.white,
+                    opacity: role === r ? 1 : 0.45,
+                    boxShadow: role === r ? (r === "teacher" ? "0 0 20px rgba(245,158,11,0.4)" : "0 0 20px rgba(16,185,129,0.4)") : "none",
                   }}>
                   {r === "student" ? "🎒 นักเรียน" : "📚 ครูผู้สอน"}
                 </button>
               ))}
             </div>
 
-            <Input label="อีเมล" value={username} onChange={setUsername} placeholder={role === "teacher" ? "teacher1@example.com" : "student1@example.com"} />
-            <Input label="รหัสผ่าน" value={password} onChange={setPassword} type="password" placeholder="••••" />
+            <Input label="อีเมล" value={username} onChange={setUsername} placeholder={role === "teacher" ? "teacher@school.ac.th" : "student@school.ac.th"} />
+            <Input label="รหัสผ่าน" value={password} onChange={setPassword} type="password" placeholder="••••••••" />
 
             {error && (
-              <div style={{ background: COLORS.redLight, color: COLORS.red, borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 14, fontWeight: 600 }}>
+              <div style={{ background: COLORS.redGlow, color: "#FCA5A5", borderRadius: 10, padding: "10px 16px", marginBottom: 16, fontSize: 13, fontWeight: 600, border: `1px solid rgba(239,68,68,0.3)` }}>
                 ⚠️ {error}
               </div>
             )}
 
-            <Button onClick={handleLogin} disabled={loading} variant={role === "teacher" ? "saffron" : "jade"} style={{ width: "100%", justifyContent: "center", fontSize: 16 }}>
-              {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+            <Button onClick={handleLogin} disabled={loading} variant={role === "teacher" ? "saffron" : "jade"} style={{ width: "100%", justifyContent: "center", fontSize: 15, padding: "13px 0" }}>
+              {loading ? "⏳ กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ →"}
             </Button>
 
-            <div style={{ marginTop: 20, padding: 14, background: COLORS.bg, borderRadius: 10, fontSize: 12, color: COLORS.slate }}>
-              <strong>Supabase:</strong> ใช้อีเมลและรหัสผ่านจาก Authentication แล้วกำหนดบทบาทในตาราง profiles
+            <div style={{ marginTop: 24, padding: 14, background: "rgba(255,255,255,0.03)", borderRadius: 12, fontSize: 12, color: COLORS.textMuted, border: `1px solid ${COLORS.glassBorder}`, lineHeight: 1.6 }}>
+              <strong style={{ color: COLORS.textSecondary }}>Supabase Auth:</strong> ใช้อีเมลและรหัสผ่านจาก Authentication
             </div>
           </div>
         </Card>
@@ -324,28 +447,55 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
         }} />
       )}
       <aside style={{
-        width: 240, background: COLORS.navy, display: "flex", flexDirection: "column",
+        width: 260,
+        background: G.sidebarBg,
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        display: "flex", flexDirection: "column",
         position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
         transform: mobileOpen ? "translateX(0)" : undefined,
-        transition: "transform .25s",
-        boxShadow: "4px 0 24px rgba(0,0,0,0.18)",
+        transition: "transform .3s cubic-bezier(0.4,0,0.2,1)",
+        borderRight: `1px solid ${COLORS.glassBorder}`,
+        boxShadow: "8px 0 40px rgba(0,0,0,0.5)",
       }}>
+        {/* Ambient glow top */}
+        <div style={{ position:"absolute", top:0, left:0, right:0, height:200, background:"radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.06), transparent 70%)", pointerEvents:"none" }} />
+
         {/* Header */}
-        <div style={{ padding: "24px 20px 20px", borderBottom: `1px solid ${COLORS.navyLight}` }}>
-          <div style={{ fontSize: 24, marginBottom: 8 }}>🏫</div>
-          <div style={{ fontWeight: 800, color: COLORS.white, fontSize: 18 }}>EduClass</div>
-          <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ padding: "28px 20px 24px", borderBottom: `1px solid ${COLORS.glassBorder}`, position:"relative" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
             <div style={{
-              width: 36, height: 36, borderRadius: "50%",
-              background: isTeacher ? COLORS.saffron : COLORS.jade,
+              width: 40, height: 40, borderRadius: 12,
+              background: G.cyan,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 700, color: isTeacher ? COLORS.navy : COLORS.white, fontSize: 15,
+              fontSize: 20, flexShrink:0,
+              boxShadow: "0 0 20px rgba(0,212,255,0.4)",
+            }}>🏫</div>
+            <div>
+              <div style={{ fontWeight: 900, color: COLORS.white, fontSize: 18, letterSpacing:"-0.3px" }}>EduClass</div>
+              <div style={{ fontSize:11, color: COLORS.textMuted, letterSpacing:"1px", textTransform:"uppercase" }}>AI Learning Platform</div>
+            </div>
+          </div>
+
+          {/* User card */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "12px 14px", borderRadius: 14,
+            background: COLORS.glassMid,
+            border: `1px solid ${COLORS.glassBorder}`,
+          }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: "50%",
+              background: isTeacher ? G.amber : G.emerald,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontWeight: 800, color: COLORS.white, fontSize: 16, flexShrink:0,
+              boxShadow: isTeacher ? "0 0 14px rgba(245,158,11,0.4)" : "0 0 14px rgba(16,185,129,0.4)",
             }}>
               {user.name.charAt(0)}
             </div>
-            <div>
-              <div style={{ color: COLORS.white, fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>
-                {user.name.length > 16 ? user.name.slice(0, 16) + "…" : user.name}
+            <div style={{ minWidth:0 }}>
+              <div style={{ color: COLORS.textPrimary, fontSize: 13, fontWeight: 700, lineHeight: 1.3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                {user.name.length > 14 ? user.name.slice(0, 14) + "…" : user.name}
               </div>
               <RoleBadge role={user.role} />
             </div>
@@ -353,29 +503,62 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: "12px 12px", overflowY: "auto" }}>
-          {nav.map(n => (
-            <button key={n.id} onClick={() => { setPage(n.id); setMobileOpen(false); }}
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                width: "100%", padding: "11px 14px", borderRadius: 10,
-                border: "none", cursor: "pointer", fontFamily: "inherit",
-                fontWeight: page === n.id ? 700 : 500, fontSize: 14,
-                marginBottom: 4,
-                background: page === n.id ? (isTeacher ? COLORS.saffron : COLORS.jade) : "transparent",
-                color: page === n.id ? (isTeacher ? COLORS.navy : COLORS.white) : "#A8B8D0",
-                textAlign: "left", transition: "all .15s",
-              }}>
-              <span style={{ fontSize: 18 }}>{n.icon}</span>
-              {n.label}
-            </button>
-          ))}
+        <nav style={{ flex: 1, padding: "16px 12px", overflowY: "auto" }}>
+          {/* Section label */}
+          <div style={{ fontSize:10, color: COLORS.textMuted, fontWeight:800, letterSpacing:"1.5px", textTransform:"uppercase", padding:"0 10px", marginBottom:8 }}>เมนูหลัก</div>
+
+          {nav.map(n => {
+            const active = page === n.id;
+            return (
+              <button key={n.id} onClick={() => { setPage(n.id); setMobileOpen(false); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  width: "100%", padding: "11px 14px", borderRadius: 12,
+                  border: active ? `1px solid ${isTeacher ? "rgba(245,158,11,0.3)" : "rgba(16,185,129,0.3)"}` : "1px solid transparent",
+                  cursor: "pointer", fontFamily: "inherit",
+                  fontWeight: active ? 700 : 500, fontSize: 13,
+                  marginBottom: 3,
+                  background: active
+                    ? (isTeacher ? "rgba(245,158,11,0.12)" : "rgba(16,185,129,0.12)")
+                    : "transparent",
+                  color: active ? COLORS.white : COLORS.textMuted,
+                  textAlign: "left", transition: "all 0.2s ease",
+                  position: "relative",
+                }}>
+                {/* Active indicator */}
+                {active && (
+                  <div style={{
+                    position:"absolute", left:0, top:"50%", transform:"translateY(-50%)",
+                    width:3, height:"60%", borderRadius:"0 3px 3px 0",
+                    background: isTeacher ? G.amber : G.emerald,
+                    boxShadow: isTeacher ? "0 0 8px rgba(245,158,11,0.6)" : "0 0 8px rgba(16,185,129,0.6)",
+                  }} />
+                )}
+                <span style={{
+                  fontSize: 17,
+                  filter: active ? "none" : "grayscale(30%)",
+                  opacity: active ? 1 : 0.6,
+                }}>{n.icon}</span>
+                {n.label}
+              </button>
+            );
+          })}
         </nav>
 
-        <div style={{ padding: "12px 16px", borderTop: `1px solid ${COLORS.navyLight}` }}>
-          <Button onClick={onLogout} variant="ghost" size="sm" style={{ width: "100%", justifyContent: "center", color: COLORS.slate }}>
+        <div style={{ padding: "16px 12px", borderTop: `1px solid ${COLORS.glassBorder}` }}>
+          <button onClick={onLogout} style={{
+            width: "100%", padding: "10px 14px", borderRadius: 12,
+            border: `1px solid ${COLORS.glassBorder}`,
+            background: "rgba(239,68,68,0.06)",
+            color: "rgba(239,68,68,0.7)",
+            cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 13,
+            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={e => { e.target.style.background="rgba(239,68,68,0.12)"; e.target.style.color="#EF4444"; }}
+          onMouseLeave={e => { e.target.style.background="rgba(239,68,68,0.06)"; e.target.style.color="rgba(239,68,68,0.7)"; }}>
             🚪 ออกจากระบบ
-          </Button>
+          </button>
         </div>
       </aside>
     </>
@@ -408,10 +591,10 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
 
   return (
     <div>
-      <h2 style={{ fontSize: 24, fontWeight: 800, color: COLORS.navy, margin: "0 0 6px" }}>
+      <h2 style={{ fontSize: 26, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 6px", letterSpacing:"-0.5px" }}>
         สวัสดี, {user.name} 👋
       </h2>
-      <p style={{ color: COLORS.slate, margin: "0 0 28px", fontSize: 15 }}>
+      <p style={{ color: COLORS.textSecondary, margin: "0 0 28px", fontSize: 15 }}>
         {isTeacher ? `วิชา: ${user.subject}` : `ห้อง: ${user.class}`}
       </p>
 
@@ -421,8 +604,8 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
           <Card key={i} accent={s.color}>
             <div style={{ padding: 20 }}>
               <div style={{ fontSize: 28, marginBottom: 8 }}>{s.icon}</div>
-              <div style={{ fontSize: 30, fontWeight: 800, color: COLORS.navy, fontFamily: "monospace" }}>{s.value}</div>
-              <div style={{ color: COLORS.slate, fontSize: 13, marginTop: 4 }}>{s.label}</div>
+              <div style={{ fontSize: 30, fontWeight: 800, color: COLORS.textPrimary, fontFamily: "monospace", letterSpacing:"-1px" }}>{s.value}</div>
+              <div style={{ color: COLORS.textSecondary, fontSize: 13, marginTop: 4 }}>{s.label}</div>
             </div>
           </Card>
         ))}
@@ -493,7 +676,7 @@ function Announcements({ user, announcements, onAdd, onDelete }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.navy, margin: 0 }}>📢 ประกาศ / ข่าวสาร</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>📢 ประกาศ / ข่าวสาร</h2>
         {isTeacher && <Button onClick={() => setShowForm(!showForm)} variant="saffron">+ โพสต์ประกาศ</Button>}
       </div>
 
@@ -521,9 +704,9 @@ function Announcements({ user, announcements, onAdd, onDelete }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 {a.pinned && <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.saffron, letterSpacing: 1 }}>📌 ปักหมุด  </span>}
-                <h3 style={{ margin: "4px 0 8px", color: COLORS.navy, fontSize: 17 }}>{a.subject}</h3>
-                <div style={{ fontSize: 13, color: COLORS.slate, marginBottom: 10 }}>{a.author} · {a.date}</div>
-                <p style={{ margin: 0, color: "#334", lineHeight: 1.7 }}>{a.body}</p>
+                <h3 style={{ margin: "4px 0 8px", color: COLORS.textPrimary, fontSize: 17 }}>{a.subject}</h3>
+                <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 10 }}>{a.author} · {a.date}</div>
+                <p style={{ margin: 0, color: COLORS.textSecondary, lineHeight: 1.7 }}>{a.body}</p>
               </div>
               {isTeacher && a.authorId === user.id && (
                 <Button onClick={() => handleDelete(a.id)} variant="danger" size="sm">🗑</Button>
@@ -556,7 +739,7 @@ function Messages({ user, messages, onSend }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.navy, margin: "0 0 20px" }}>💬 ส่งข้อความ</h2>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}>💬 ส่งข้อความ</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         {/* Message list */}
         <Card accent={COLORS.jade} style={{ marginBottom: 20 }}>
@@ -650,7 +833,7 @@ function ExerciseList({ user, exercises, onAdd, onDelete, submissions, onOpenExe
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.navy, margin: 0 }}>✏️ แบบฝึกหัด</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>✏️ แบบฝึกหัด</h2>
         {isTeacher && <Button onClick={() => setShowForm(!showForm)} variant="saffron">+ สร้างแบบฝึกหัด</Button>}
       </div>
 
@@ -798,7 +981,7 @@ ${exercise.questions.map((q, i) => `
       <Button onClick={onBack} variant="ghost" size="sm" style={{ marginBottom: 20 }}>← กลับ</Button>
       <Card accent={COLORS.saffron} style={{ marginBottom: 20 }}>
         <div style={{ padding: 24 }}>
-          <h2 style={{ color: COLORS.navy, margin: "0 0 6px" }}>{exercise.title}</h2>
+          <h2 style={{ color: COLORS.textPrimary, margin: "0 0 6px" }}>{exercise.title}</h2>
           <div style={{ color: COLORS.slate, fontSize: 14 }}>👨‍🏫 {exercise.author} · 📅 ครบกำหนด {exercise.dueDate}</div>
           {exercise.description && <p style={{ margin: "10px 0 0", color: COLORS.navy }}>{exercise.description}</p>}
         </div>
@@ -861,7 +1044,7 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.navy, margin: 0 }}>📊 แดชบอร์ดคะแนนแบบฝึกหัด</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>📊 แดชบอร์ดคะแนนแบบฝึกหัด</h2>
           <p style={{ color: COLORS.slate, margin: "6px 0 0", fontSize: 14 }}>
             รวบรวมผลการทำแบบฝึกหัดและรายชื่อนักเรียนที่ส่งงานแล้ว
           </p>
@@ -1003,7 +1186,7 @@ function MyScores({ user, submissions, exercises }) {
   const mySubmissions = submissions.filter(s => s.studentId === user.id);
   return (
     <div>
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.navy, margin: "0 0 20px" }}>⭐ คะแนนของฉัน</h2>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}>⭐ คะแนนของฉัน</h2>
       {mySubmissions.length === 0 ? (
         <Card><div style={{ padding: 40, textAlign: "center", color: COLORS.slate }}>ยังไม่มีการส่งแบบฝึกหัด</div></Card>
       ) : (
@@ -1101,7 +1284,7 @@ function Settings({ user, onSave }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.navy, margin: "0 0 20px" }}>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}>
         ⚙️ ตั้งค่าข้อมูลส่วนตัว
       </h2>
 
@@ -1308,11 +1491,30 @@ export default function App() {
 
   if (authLoading) return (
     <div style={{
-      minHeight: "100vh", background: `linear-gradient(135deg, ${COLORS.navy} 0%, ${COLORS.navyLight} 100%)`,
-      display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16,
+      minHeight: "100vh", background: G.mesh,
+      display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20,
+      position: "relative", overflow: "hidden",
     }}>
-      <div style={{ fontSize: 48 }}>🏫</div>
-      <div style={{ color: COLORS.white, fontSize: 18, fontWeight: 600 }}>กำลังโหลด...</div>
+      <div style={{ position:"absolute", width:500, height:500, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,212,255,0.06),transparent 70%)", top:"50%", left:"50%", transform:"translate(-50%,-50%)", pointerEvents:"none" }} />
+      <div style={{
+        width: 80, height: 80, borderRadius: 24,
+        background: G.cyan,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 38,
+        boxShadow: "0 0 40px rgba(0,212,255,0.5)",
+        animation: "pulse 2s infinite",
+      }}>🏫</div>
+      <div style={{ color: COLORS.textPrimary, fontSize: 18, fontWeight: 700 }}>กำลังโหลด...</div>
+      <div style={{ display:"flex", gap:6 }}>
+        {[0,1,2].map(i => (
+          <div key={i} style={{
+            width:8, height:8, borderRadius:"50%",
+            background: COLORS.cyan,
+            opacity: 0.6,
+            animation: `bounce 1.2s ${i*0.2}s infinite`,
+          }} />
+        ))}
+      </div>
     </div>
   );
 
@@ -1321,18 +1523,26 @@ export default function App() {
   const isTeacher = user.role === "teacher";
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.bg, fontFamily: "'Sarabun', system-ui, sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: G.mesh, fontFamily: "'Sarabun', system-ui, sans-serif" }}>
       <Sidebar user={user} page={activeExercise ? "exercises" : page} setPage={p => { setPage(p); setActiveExercise(null); }}
         onLogout={handleLogout}
         mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
       {/* Main content */}
-      <main style={{ marginLeft: 240, flex: 1, padding: "32px 28px", minHeight: "100vh" }}>
+      <main style={{ marginLeft: 260, flex: 1, padding: "36px 32px", minHeight: "100vh", position:"relative" }}>
+        {/* Background grid */}
+        <div style={{
+          position:"fixed", inset:0, zIndex:0, pointerEvents:"none", marginLeft:260,
+          backgroundImage:`linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)`,
+          backgroundSize:"40px 40px",
+        }} />
+        <div style={{ position:"relative", zIndex:1 }}>
         {/* Mobile hamburger */}
         <button onClick={() => setMobileOpen(true)} style={{
           display: "none", position: "fixed", top: 16, left: 16, zIndex: 80,
-          background: COLORS.navy, border: "none", borderRadius: 10, padding: "8px 12px",
+          background: G.cyan, border: "none", borderRadius: 12, padding: "8px 14px",
           color: COLORS.white, cursor: "pointer", fontSize: 20,
+          boxShadow: "0 0 20px rgba(0,212,255,0.4)",
         }}>☰</button>
 
         {page === "dashboard" && !activeExercise && (
@@ -1369,10 +1579,24 @@ export default function App() {
         )}
       </main>
 
+      </div>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800;900&display=swap');
         * { box-sizing: border-box; }
-        body { margin: 0; }
+        body { margin: 0; color-scheme: dark; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.3); }
+        input::placeholder, textarea::placeholder { color: rgba(139,157,195,0.5); }
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 40px rgba(0,212,255,0.5); }
+          50% { box-shadow: 0 0 60px rgba(0,212,255,0.8); }
+        }
+        @keyframes bounce {
+          0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
+          40% { transform: scale(1.2); opacity: 1; }
+        }
         @media (max-width: 700px) {
           main { margin-left: 0 !important; padding: 20px 14px !important; }
           button[aria-label="menu"] { display: flex !important; }
