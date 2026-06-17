@@ -24,61 +24,7 @@ const COLORS = {
   greenLight: "#D4EDDA",
 };
 
-// ── Mock data ──────────────────────────────────────────────────────────────
-// eslint-disable-next-line no-unused-vars
-const USERS = {
-  teacher: [
-    { id: "t1", name: "อาจารย์สมชาย ใจดี", role: "teacher", subject: "คณิตศาสตร์", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher1", password: "1234" },
-    { id: "t2", name: "อาจารย์สุมาลี รักเรียนดี", role: "teacher", subject: "ภาษาไทย", department: "แผนกวิชาสามัญสัมพันธ์", username: "teacher2", password: "1234" },
-  ],
-  student: [
-    { id: "s1", name: "นายกิตติ มานะ", role: "student", department: "แผนกวิชาคอมพิวเตอร์ธุรกิจ", level: "ปวช.1", class: "ปวช.1/1", username: "student1", password: "1234" },
-    { id: "s2", name: "นางสาวนิดา สุขใจ", role: "student", department: "แผนกวิชาการบัญชี", level: "ปวช.1", class: "ปวช.1/1", username: "student2", password: "1234" },
-    { id: "s3", name: "นายภูมิ วิชาดี", role: "student", department: "แผนกวิชาเทคโนโลยีสารสนเทศ", level: "ปวช.2", class: "ปวช.2/1", username: "student3", password: "1234" },
-  ],
-};
-
-// eslint-disable-next-line no-unused-vars
-const INITIAL_ANNOUNCEMENTS = [
-  { id: "a1", author: "อาจารย์สมชาย ใจดี", authorId: "t1", subject: "📢 หยุดเรียนวันพรุ่งนี้", body: "เนื่องจากมีกิจกรรมวันไหว้ครู นักเรียนทุกคนหยุดเรียนในวันพรุ่งนี้ค่ะ/ครับ", date: "15 มิ.ย. 2568", pinned: true },
-  { id: "a2", author: "อาจารย์สุมาลี รักเรียน", authorId: "t2", subject: "📝 ส่งงานภาษาไทย", body: "ขอให้นักเรียนส่งงานเรื่องการแต่งกลอนสุภาพภายในวันศุกร์นี้นะคะ", date: "14 มิ.ย. 2568", pinned: false },
-];
-
-// eslint-disable-next-line no-unused-vars
-const INITIAL_EXERCISES = [
-  {
-    id: "ex1",
-    title: "แบบฝึกหัดคณิตศาสตร์ บทที่ 1",
-    subject: "คณิตศาสตร์",
-    author: "อาจารย์สมชาย ใจดี",
-    authorId: "t1",
-    dueDate: "20 มิ.ย. 2568",
-    description: "ฝึกทักษะพีชคณิตเบื้องต้น",
-    questions: [
-      { id: "q1", text: "ถ้า x + 5 = 12 แล้ว x มีค่าเท่าใด?", answer: "7", hint: "ลบ 5 ออกจากทั้งสองข้าง" },
-      { id: "q2", text: "2x - 3 = 9 แล้ว x มีค่าเท่าใด?", answer: "6", hint: "บวก 3 แล้วหาร 2" },
-      { id: "q3", text: "พื้นที่สี่เหลี่ยมที่มีด้านยาว 8 ซม. และกว้าง 5 ซม. มีค่าเท่าใด?", answer: "40", hint: "พื้นที่ = กว้าง × ยาว" },
-    ],
-  },
-  {
-    id: "ex2",
-    title: "แบบฝึกหัดภาษาไทย บทที่ 2",
-    subject: "ภาษาไทย",
-    author: "อาจารย์สุมาลี รักเรียน",
-    authorId: "t2",
-    dueDate: "18 มิ.ย. 2568",
-    description: "ทบทวนไวยากรณ์ภาษาไทย",
-    questions: [
-      { id: "q1", text: "คำว่า 'กอไผ่' มีกี่พยางค์?", answer: "2", hint: "นับพยางค์: กอ-ไผ่" },
-      { id: "q2", text: "คำว่า 'สวรรค์' เป็นคำประเภทใด?", answer: "คำนาม", hint: "พิจารณาว่าเป็นชื่อสิ่งใด" },
-      { id: "q3", text: "ประโยค 'แมวกินปลา' มีกี่ส่วนประกอบหลัก?", answer: "3", hint: "ประธาน กริยา กรรม" },
-    ],
-  },
-];
-
-const INITIAL_MESSAGES = [
-  { id: "m1", from: "อาจารย์สมชาย ใจดี", fromId: "t1", to: "นักเรียนทุกคน", text: "วันนี้เรียนออนไลน์ผ่าน Zoom นะครับ ลิงก์ส่งทาง Line แล้ว", date: "15 มิ.ย.", type: "broadcast" },
-];
+// ── Data helpers ─────────────────────────────────────────────────────────
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -148,6 +94,12 @@ const dbToSubmission = (r) => ({
   answers: r.answers || {}, score: r.score, maxScore: r.max_score,
   percentage: r.percentage, comment: r.comment,
   results: r.results || [], date: formatDate(r.created_at),
+});
+
+const dbToMessage = (r) => ({
+  id: r.id, from: r.from_name, fromId: r.from_id,
+  to: r.to_label, text: r.text,
+  date: formatDate(r.created_at), type: r.msg_type || "broadcast",
 });
 
 // ── Components ─────────────────────────────────────────────────────────────
@@ -585,24 +537,21 @@ function Announcements({ user, announcements, onAdd, onDelete }) {
 }
 
 // ── Messages ───────────────────────────────────────────────────────────────
-function Messages({ user, messages, setMessages }) {
+function Messages({ user, messages, onSend }) {
   const [text, setText] = useState("");
   const [toAll, setToAll] = useState(true);
   const [target, setTarget] = useState("");
+  const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!text.trim()) return;
-    const msg = {
-      id: "m" + Date.now(), from: user.name, fromId: user.id,
-      to: toAll ? "นักเรียนทุกคน" : target,
-      text, date: "วันนี้",
-      type: toAll ? "broadcast" : "direct",
-    };
-    setMessages([...messages, msg]);
+    setSending(true);
+    await onSend(text, toAll ? "นักเรียนทุกคน" : target, toAll ? "broadcast" : "direct");
     setText("");
+    setSending(false);
   };
 
   return (
@@ -665,7 +614,7 @@ function Messages({ user, messages, setMessages }) {
                   padding: "10px 14px", fontSize: 15, fontFamily: "inherit",
                   background: COLORS.bg, color: COLORS.navy, outline: "none",
                 }} />
-              <Button onClick={handleSend} variant="jade">ส่ง ➤</Button>
+              <Button onClick={handleSend} variant="jade" disabled={sending}>{sending ? "..." : "ส่ง ➤"}</Button>
             </div>
           </div>
         </Card>
@@ -1137,7 +1086,14 @@ function Settings({ user, onSave }) {
       }
     }
 
-    onSave(nextUser);
+    // Reload profile from Supabase to confirm saved
+    if (supabase) {
+      const { data: refreshed } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      if (refreshed) {
+        const updatedUser = profileToUser(refreshed, { email: user.email });
+        onSave(updatedUser);
+      } else { onSave(nextUser); }
+    } else { onSave(nextUser); }
     setSaving(false);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
@@ -1228,7 +1184,7 @@ export default function App() {
   const [page, setPage] = useState("dashboard");
   const [announcements, setAnnouncements] = useState([]);
   const [exercises, setExercises] = useState([]);
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [activeExercise, setActiveExercise] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -1236,14 +1192,16 @@ export default function App() {
   // ── Load data from Supabase ──────────────────────────────────────────────
   const loadData = async () => {
     if (!supabase) return;
-    const [annRes, exRes, subRes] = await Promise.all([
+    const [annRes, exRes, subRes, msgRes] = await Promise.all([
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
       supabase.from("exercises").select("*").order("created_at", { ascending: false }),
       supabase.from("submissions").select("*").order("created_at", { ascending: false }),
+      supabase.from("messages").select("*").order("created_at", { ascending: true }),
     ]);
     if (annRes.data) setAnnouncements(annRes.data.map(dbToAnnouncement));
     if (exRes.data) setExercises(exRes.data.map(dbToExercise));
     if (subRes.data) setSubmissions(subRes.data.map(dbToSubmission));
+    if (msgRes.data) setMessages(msgRes.data.map(dbToMessage));
   };
 
   // ── Auth session ──────────────────────────────────────────────────────────
@@ -1272,6 +1230,22 @@ export default function App() {
   const handleLogout = async () => {
     if (supabase) await supabase.auth.signOut();
     setUser(null); setActiveExercise(null); setPage("dashboard");
+  };
+
+  // ── Messages CRUD ──────────────────────────────────────────────────────────
+  const handleSendMessage = async (text, toLabel, msgType) => {
+    const newMsg = {
+      from_id: user.id, from_name: user.name,
+      to_label: toLabel, text, msg_type: msgType,
+    };
+    if (supabase) {
+      const { data, error } = await supabase.from("messages").insert([newMsg]).select().single();
+      if (!error && data) { setMessages(prev => [...prev, dbToMessage(data)]); return; }
+    }
+    setMessages(prev => [...prev, {
+      id: "m" + Date.now(), from: user.name, fromId: user.id,
+      to: toLabel, text, date: "วันนี้", type: msgType,
+    }]);
   };
 
   // ── Announcements CRUD ────────────────────────────────────────────────────
@@ -1342,7 +1316,7 @@ export default function App() {
     </div>
   );
 
-  if (!user) return <LoginScreen onLogin={u => { setUser(u); setPage("dashboard"); loadData(); }} />;
+  if (!user) return <LoginScreen onLogin={async (u) => { setUser(u); setPage("dashboard"); await loadData(); }} />;
 
   const isTeacher = user.role === "teacher";
 
@@ -1370,7 +1344,7 @@ export default function App() {
             onAdd={handleAddAnnouncement} onDelete={handleDeleteAnnouncement} />
         )}
         {page === "messages" && !activeExercise && (
-          <Messages user={user} messages={messages} setMessages={setMessages} />
+          <Messages user={user} messages={messages} onSend={handleSendMessage} />
         )}
         {page === "exercises" && !activeExercise && (
           <ExerciseList user={user} exercises={exercises}
