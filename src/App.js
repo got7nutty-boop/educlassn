@@ -154,6 +154,12 @@ const dbToMessage = (r) => ({
   date: formatDate(r.created_at), type: r.msg_type || "broadcast",
 });
 
+const dbToComment = (r) => ({
+  id: r.id, announcementId: r.announcement_id,
+  userId: r.user_id, userName: r.user_name, userRole: r.user_role,
+  text: r.text, date: formatDate(r.created_at),
+});
+
 // ── Components ─────────────────────────────────────────────────────────────
 
 function RoleBadge({ role }) {
@@ -684,7 +690,7 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
 }
 
 // ── Announcements ──────────────────────────────────────────────────────────
-function Announcements({ user, announcements, onAdd, onDelete }) {
+function PostComposer({ user, onAdd }) {
   const isTeacher = user.role === "teacher";
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState("");
@@ -731,14 +737,183 @@ function Announcements({ user, announcements, onAdd, onDelete }) {
     if (!subject.trim() || !body.trim()) return;
     setSaving(true);
     let imageUrl = null;
-    if (imageFile) imageUrl = await uploadImage(imageFile);
-    await onAdd({ author: user.name, authorId: user.id, subject, body, pinned, imageUrl });
+    if (isTeacher && imageFile) imageUrl = await uploadImage(imageFile);
+    await onAdd({ author: user.name, authorId: user.id, subject, body, pinned: isTeacher ? pinned : false, imageUrl });
     setSubject(""); setBody(""); setPinned(false); setShowForm(false);
     removeImage();
     setSaving(false);
   };
 
+  return (
+    <Card style={{ marginBottom: 20 }}>
+      <div style={{ padding: 16 }}>
+        {!showForm ? (
+          <button onClick={() => setShowForm(true)} style={{
+            display: "flex", alignItems: "center", gap: 12,
+            width: "100%", background: "none", border: "none", cursor: "pointer",
+            padding: 0, fontFamily: "inherit",
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: "50%",
+              background: isTeacher ? G.amber : G.emerald, flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontWeight: 800, color: COLORS.white, fontSize: 16,
+            }}>{user.name.charAt(0)}</div>
+            <div style={{
+              flex: 1, textAlign: "left", padding: "10px 16px",
+              background: COLORS.navyMid, borderRadius: 24,
+              color: COLORS.textMuted, fontSize: 14,
+            }}>
+              คุณกำลังคิดอะไรอยู่ {user.name.split(" ")[0]}?
+            </div>
+          </button>
+        ) : (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: "50%",
+                background: isTeacher ? G.amber : G.emerald, flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 800, color: COLORS.white, fontSize: 16,
+              }}>{user.name.charAt(0)}</div>
+              <div>
+                <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 14 }}>{user.name}</div>
+                <div style={{ fontSize: 12, color: COLORS.textMuted }}>กำลังโพสต์ประกาศ</div>
+              </div>
+            </div>
+
+            <Input value={subject} onChange={setSubject} placeholder="หัวข้อประกาศ..." />
+            <Textarea value={body} onChange={setBody} placeholder="คุณกำลังคิดอะไรอยู่..." rows={3} />
+
+            {/* Image upload — teachers only */}
+            {isTeacher && (
+              imagePreview ? (
+                <div style={{ position: "relative", marginBottom: 16, borderRadius: 14, overflow: "hidden" }}>
+                  <img src={imagePreview} alt="preview" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
+                  <button onClick={removeImage} style={{
+                    position: "absolute", top: 10, right: 10,
+                    width: 32, height: 32, borderRadius: "50%",
+                    background: "rgba(0,0,0,0.6)", border: "none", color: COLORS.white,
+                    cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>✕</button>
+                </div>
+              ) : (
+                <button onClick={() => fileInputRef.current?.click()} style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  width: "100%", padding: "14px", marginBottom: 16,
+                  border: `1.5px dashed ${COLORS.glassBorderBright}`, borderRadius: 14,
+                  background: "rgba(56,189,248,0.04)", color: COLORS.cyan,
+                  cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 13,
+                }}>
+                  🖼️ เพิ่มรูปภาพ
+                </button>
+              )
+            )}
+            {isTeacher && <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} style={{ display: "none" }} />}
+            {!isTeacher && (
+              <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 16 }}>
+                ℹ️ นักเรียนสามารถโพสต์ประกาศได้ แต่ไม่สามารถแนบรูปภาพ
+              </div>
+            )}
+
+            {isTeacher && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <input type="checkbox" id="pin" checked={pinned} onChange={e => setPinned(e.target.checked)} />
+                <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.textPrimary, cursor: "pointer", fontSize: 13 }}>📌 ปักหมุดประกาศนี้</label>
+              </div>
+            )}
+
+            {uploadProgress && (
+              <div style={{ fontSize: 13, color: COLORS.cyan, marginBottom: 12 }}>⏳ {uploadProgress}</div>
+            )}
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <Button onClick={handlePost} variant={isTeacher ? "saffron" : "jade"} disabled={saving} style={{ flex: 1, justifyContent: "center" }}>
+                {saving ? "กำลังโพสต์..." : "📤 โพสต์"}
+              </Button>
+              <Button onClick={() => { setShowForm(false); removeImage(); }} variant="ghost">ยกเลิก</Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function CommentSection({ user, announcementId, comments, onAddComment, onDeleteComment }) {
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const myComments = comments.filter(c => c.announcementId === announcementId);
+
+  const handleSend = async () => {
+    if (!text.trim()) return;
+    setSending(true);
+    await onAddComment(announcementId, text);
+    setText("");
+    setSending(false);
+  };
+
+  return (
+    <div style={{ padding: "12px 18px 16px", borderTop: `1px solid ${COLORS.glassBorder}` }}>
+      {myComments.length > 0 && (
+        <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+          {myComments.map(c => (
+            <div key={c.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                background: c.userRole === "teacher" ? G.amber : G.emerald,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 800, color: COLORS.white, fontSize: 12,
+              }}>{c.userName.charAt(0)}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  background: COLORS.navyMid, borderRadius: 12, padding: "8px 12px",
+                  display: "inline-block",
+                }}>
+                  <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textPrimary }}>{c.userName}</div>
+                  <div style={{ fontSize: 13.5, color: COLORS.textSecondary, marginTop: 2 }}>{c.text}</div>
+                </div>
+                <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 3, display: "flex", gap: 10, alignItems: "center" }}>
+                  {c.date}
+                  {(c.userId === user.id || user.role === "teacher") && (
+                    <button onClick={() => onDeleteComment(c.id)} style={{ background: "none", border: "none", color: COLORS.red, cursor: "pointer", fontSize: 11, fontWeight: 600, padding: 0 }}>ลบ</button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+          background: user.role === "teacher" ? G.amber : G.emerald,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontWeight: 800, color: COLORS.white, fontSize: 12,
+        }}>{user.name.charAt(0)}</div>
+        <input
+          value={text} onChange={e => setText(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSend()}
+          placeholder="แสดงความเห็น..."
+          style={{
+            flex: 1, border: `1px solid ${COLORS.glassBorder}`, borderRadius: 20,
+            padding: "8px 14px", fontSize: 13, fontFamily: "inherit",
+            background: COLORS.navyMid, color: COLORS.textPrimary, outline: "none",
+          }}
+        />
+        <Button onClick={handleSend} variant="ghost" size="sm" disabled={sending}>ส่ง</Button>
+      </div>
+    </div>
+  );
+}
+
+function Announcements({ user, announcements, onAdd, onDelete, likes, comments, onToggleLike, onAddComment, onDeleteComment }) {
+  const isTeacher = user.role === "teacher";
+  const [openComments, setOpenComments] = useState({});
+
   const handleDelete = (id) => onDelete(id);
+  const toggleComments = (id) => setOpenComments(prev => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <div style={{ maxWidth: 680, margin: "0 auto" }}>
@@ -746,145 +921,94 @@ function Announcements({ user, announcements, onAdd, onDelete }) {
         <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>📰 ฟีดข่าวสาร</h2>
       </div>
 
-      {/* Composer — Facebook style "what's on your mind" box */}
-      {isTeacher && (
-        <Card style={{ marginBottom: 20 }}>
-          <div style={{ padding: 16 }}>
-            {!showForm ? (
-              <button onClick={() => setShowForm(true)} style={{
-                display: "flex", alignItems: "center", gap: 12,
-                width: "100%", background: "none", border: "none", cursor: "pointer",
-                padding: 0, fontFamily: "inherit",
-              }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: "50%",
-                  background: G.amber, flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontWeight: 800, color: COLORS.white, fontSize: 16,
-                }}>{user.name.charAt(0)}</div>
-                <div style={{
-                  flex: 1, textAlign: "left", padding: "10px 16px",
-                  background: COLORS.navyMid, borderRadius: 24,
-                  color: COLORS.textMuted, fontSize: 14,
-                }}>
-                  คุณกำลังคิดอะไรอยู่ {user.name.split(" ")[0]}?
-                </div>
-              </button>
-            ) : (
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                  <div style={{
-                    width: 40, height: 40, borderRadius: "50%",
-                    background: G.amber, flexShrink: 0,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontWeight: 800, color: COLORS.white, fontSize: 16,
-                  }}>{user.name.charAt(0)}</div>
-                  <div>
-                    <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 14 }}>{user.name}</div>
-                    <div style={{ fontSize: 12, color: COLORS.textMuted }}>กำลังโพสต์ประกาศ</div>
-                  </div>
-                </div>
-
-                <Input value={subject} onChange={setSubject} placeholder="หัวข้อประกาศ..." />
-                <Textarea value={body} onChange={setBody} placeholder="คุณกำลังคิดอะไรอยู่..." rows={3} />
-
-                {/* Image preview */}
-                {imagePreview ? (
-                  <div style={{ position: "relative", marginBottom: 16, borderRadius: 14, overflow: "hidden" }}>
-                    <img src={imagePreview} alt="preview" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
-                    <button onClick={removeImage} style={{
-                      position: "absolute", top: 10, right: 10,
-                      width: 32, height: 32, borderRadius: "50%",
-                      background: "rgba(0,0,0,0.6)", border: "none", color: COLORS.white,
-                      cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>✕</button>
-                  </div>
-                ) : (
-                  <button onClick={() => fileInputRef.current?.click()} style={{
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                    width: "100%", padding: "14px", marginBottom: 16,
-                    border: `1.5px dashed ${COLORS.glassBorderBright}`, borderRadius: 14,
-                    background: "rgba(56,189,248,0.04)", color: COLORS.cyan,
-                    cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 13,
-                  }}>
-                    🖼️ เพิ่มรูปภาพ
-                  </button>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} style={{ display: "none" }} />
-
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                  <input type="checkbox" id="pin" checked={pinned} onChange={e => setPinned(e.target.checked)} />
-                  <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.textPrimary, cursor: "pointer", fontSize: 13 }}>📌 ปักหมุดประกาศนี้</label>
-                </div>
-
-                {uploadProgress && (
-                  <div style={{ fontSize: 13, color: COLORS.cyan, marginBottom: 12 }}>⏳ {uploadProgress}</div>
-                )}
-
-                <div style={{ display: "flex", gap: 10 }}>
-                  <Button onClick={handlePost} variant="saffron" disabled={saving} style={{ flex: 1, justifyContent: "center" }}>
-                    {saving ? "กำลังโพสต์..." : "📤 โพสต์"}
-                  </Button>
-                  <Button onClick={() => { setShowForm(false); removeImage(); }} variant="ghost">ยกเลิก</Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
+      <PostComposer user={user} onAdd={onAdd} />
 
       {/* Feed */}
       {announcements.length === 0 ? (
         <Card><div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>ยังไม่มีประกาศ</div></Card>
-      ) : announcements.map(a => (
-        <Card key={a.id} accent={a.pinned ? COLORS.amber : null} style={{ marginBottom: 16 }} glow={a.pinned ? COLORS.amberGlow : null}>
-          {/* Post header */}
-          <div style={{ padding: "16px 18px 12px", display: "flex", alignItems: "flex-start", gap: 12 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
-              background: G.amber,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 800, color: COLORS.white, fontSize: 17,
-            }}>{a.author.charAt(0)}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 }}>{a.author}</div>
-              <div style={{ fontSize: 12, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
-                {a.date}
-                {a.pinned && <span style={{ color: COLORS.amber, fontWeight: 700 }}>· 📌 ปักหมุด</span>}
+      ) : announcements.map(a => {
+        const postLikes = likes.filter(l => l.announcement_id === a.id);
+        const iLiked = postLikes.some(l => l.user_id === user.id);
+        const postComments = comments.filter(c => c.announcementId === a.id);
+        const commentsOpen = !!openComments[a.id];
+
+        return (
+          <Card key={a.id} accent={a.pinned ? COLORS.amber : null} style={{ marginBottom: 16 }} glow={a.pinned ? COLORS.amberGlow : null}>
+            {/* Post header */}
+            <div style={{ padding: "16px 18px 12px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
+                background: a.authorId && a.authorId === user.id && !isTeacher ? G.emerald : G.amber,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 800, color: COLORS.white, fontSize: 17,
+              }}>{a.author.charAt(0)}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 }}>{a.author}</div>
+                <div style={{ fontSize: 12, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
+                  {a.date}
+                  {a.pinned && <span style={{ color: COLORS.amber, fontWeight: 700 }}>· 📌 ปักหมุด</span>}
+                </div>
               </div>
+              {(a.authorId === user.id || isTeacher) && (
+                <Button onClick={() => handleDelete(a.id)} variant="danger" size="sm">🗑</Button>
+              )}
             </div>
-            {isTeacher && a.authorId === user.id && (
-              <Button onClick={() => handleDelete(a.id)} variant="danger" size="sm">🗑</Button>
+
+            {/* Post body */}
+            <div style={{ padding: "0 18px 16px" }}>
+              <h3 style={{ margin: "0 0 8px", color: COLORS.textPrimary, fontSize: 16, fontWeight: 800 }}>{a.subject}</h3>
+              <p style={{ margin: 0, color: COLORS.textSecondary, lineHeight: 1.7, fontSize: 14.5, whiteSpace: "pre-wrap" }}>{a.body}</p>
+            </div>
+
+            {/* Post image */}
+            {a.imageUrl && (
+              <img src={a.imageUrl} alt={a.subject} style={{
+                width: "100%", maxHeight: 480, objectFit: "cover", display: "block",
+              }} />
             )}
-          </div>
 
-          {/* Post body */}
-          <div style={{ padding: "0 18px 16px" }}>
-            <h3 style={{ margin: "0 0 8px", color: COLORS.textPrimary, fontSize: 16, fontWeight: 800 }}>{a.subject}</h3>
-            <p style={{ margin: 0, color: COLORS.textSecondary, lineHeight: 1.7, fontSize: 14.5, whiteSpace: "pre-wrap" }}>{a.body}</p>
-          </div>
+            {/* Like / comment counts */}
+            {(postLikes.length > 0 || postComments.length > 0) && (
+              <div style={{ padding: "10px 18px 0", display: "flex", justifyContent: "space-between", fontSize: 12.5, color: COLORS.textMuted }}>
+                <span>{postLikes.length > 0 && `👍 ${postLikes.length} คนถูกใจ`}</span>
+                <span>{postComments.length > 0 && `${postComments.length} ความเห็น`}</span>
+              </div>
+            )}
 
-          {/* Post image */}
-          {a.imageUrl && (
-            <img src={a.imageUrl} alt={a.subject} style={{
-              width: "100%", maxHeight: 480, objectFit: "cover", display: "block",
-            }} />
-          )}
+            {/* Engagement bar */}
+            <div style={{
+              padding: "8px 18px", display: "flex", gap: 4,
+              borderTop: `1px solid ${COLORS.glassBorder}`, marginTop: 8,
+            }}>
+              <button onClick={() => onToggleLike(a.id)} style={{
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                background: "none", border: "none", cursor: "pointer",
+                padding: "8px 0", borderRadius: 10,
+                fontSize: 13, fontWeight: 700,
+                color: iLiked ? COLORS.cyan : COLORS.textMuted,
+                transition: "all 0.15s ease",
+              }}>
+                {iLiked ? "💙 ถูกใจแล้ว" : "👍 ถูกใจ"}
+              </button>
+              <button onClick={() => toggleComments(a.id)} style={{
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                background: "none", border: "none", cursor: "pointer",
+                padding: "8px 0", borderRadius: 10,
+                fontSize: 13, fontWeight: 700, color: COLORS.textMuted,
+              }}>
+                💬 แสดงความเห็น
+              </button>
+            </div>
 
-          {/* Engagement bar (visual only, Facebook style) */}
-          <div style={{
-            padding: "10px 18px", display: "flex", gap: 20,
-            borderTop: `1px solid ${COLORS.glassBorder}`, marginTop: a.imageUrl ? 0 : 4,
-          }}>
-            <span style={{ fontSize: 13, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
-              👍 ทราบแล้ว
-            </span>
-            <span style={{ fontSize: 13, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
-              💬 แสดงความเห็น
-            </span>
-          </div>
-        </Card>
-      ))}
+            {commentsOpen && (
+              <CommentSection
+                user={user} announcementId={a.id} comments={comments}
+                onAddComment={onAddComment} onDeleteComment={onDeleteComment}
+              />
+            )}
+          </Card>
+        );
+      })}
     </div>
   );
 }
@@ -1539,22 +1663,28 @@ export default function App() {
   const [exercises, setExercises] = useState([]);
   const [messages, setMessages] = useState([]);
   const [submissions, setSubmissions] = useState([]);
+  const [likes, setLikes] = useState([]);
+  const [comments, setComments] = useState([]);
   const [activeExercise, setActiveExercise] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // ── Load data from Supabase ──────────────────────────────────────────────
   const loadData = async () => {
     if (!supabase) return;
-    const [annRes, exRes, subRes, msgRes] = await Promise.all([
+    const [annRes, exRes, subRes, msgRes, likeRes, commentRes] = await Promise.all([
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
       supabase.from("exercises").select("*").order("created_at", { ascending: false }),
       supabase.from("submissions").select("*").order("created_at", { ascending: false }),
       supabase.from("messages").select("*").order("created_at", { ascending: true }),
+      supabase.from("announcement_likes").select("*"),
+      supabase.from("announcement_comments").select("*").order("created_at", { ascending: true }),
     ]);
     if (annRes.data) setAnnouncements(annRes.data.map(dbToAnnouncement));
     if (exRes.data) setExercises(exRes.data.map(dbToExercise));
     if (subRes.data) setSubmissions(subRes.data.map(dbToSubmission));
     if (msgRes.data) setMessages(msgRes.data.map(dbToMessage));
+    if (likeRes.data) setLikes(likeRes.data);
+    if (commentRes.data) setComments(commentRes.data.map(dbToComment));
   };
 
   // ── Auth session ──────────────────────────────────────────────────────────
@@ -1616,6 +1746,39 @@ export default function App() {
     if (!supabase) return;
     await supabase.from("announcements").delete().eq("id", id);
     setAnnouncements(prev => prev.filter(a => a.id !== id));
+    setLikes(prev => prev.filter(l => l.announcement_id !== id));
+    setComments(prev => prev.filter(c => c.announcementId !== id));
+  };
+
+  // ── Likes ──────────────────────────────────────────────────────────────────
+  const handleToggleLike = async (announcementId) => {
+    if (!supabase) return;
+    const existing = likes.find(l => l.announcement_id === announcementId && l.user_id === user.id);
+    if (existing) {
+      await supabase.from("announcement_likes").delete().eq("id", existing.id);
+      setLikes(prev => prev.filter(l => l.id !== existing.id));
+    } else {
+      const { data, error } = await supabase.from("announcement_likes").insert([{
+        announcement_id: announcementId, user_id: user.id, user_name: user.name,
+      }]).select().single();
+      if (!error && data) setLikes(prev => [...prev, data]);
+    }
+  };
+
+  // ── Comments ───────────────────────────────────────────────────────────────
+  const handleAddComment = async (announcementId, text) => {
+    if (!supabase || !text.trim()) return;
+    const { data, error } = await supabase.from("announcement_comments").insert([{
+      announcement_id: announcementId, user_id: user.id,
+      user_name: user.name, user_role: user.role, text: text.trim(),
+    }]).select().single();
+    if (!error && data) setComments(prev => [...prev, dbToComment(data)]);
+  };
+
+  const handleDeleteComment = async (id) => {
+    if (!supabase) return;
+    await supabase.from("announcement_comments").delete().eq("id", id);
+    setComments(prev => prev.filter(c => c.id !== id));
   };
 
   // ── Exercises CRUD ────────────────────────────────────────────────────────
@@ -1724,7 +1887,9 @@ export default function App() {
           <>
             <BackButton onClick={() => setPage("dashboard")} />
             <Announcements user={user} announcements={announcements}
-              onAdd={handleAddAnnouncement} onDelete={handleDeleteAnnouncement} />
+              onAdd={handleAddAnnouncement} onDelete={handleDeleteAnnouncement}
+              likes={likes} comments={comments}
+              onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} />
           </>
         )}
         {page === "messages" && !activeExercise && (
