@@ -315,63 +315,136 @@ function LoginScreen({ onLogin }) {
   return (
     <div style={{
       minHeight: "100vh",
-      background: COLORS.bg,
-      display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+      display: "flex",
+      fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
     }}>
-      <div className="login-slide-in" style={{ width: "100%", maxWidth: 420 }}>
-        {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: 16,
-            background: COLORS.navy,
-            margin: "0 auto 16px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 30,
-          }}>🏫</div>
-          <h1 style={{ color: COLORS.textPrimary, fontSize: 26, fontWeight: 800, margin: 0 }}>EduClass</h1>
-          <p style={{ color: COLORS.textSecondary, margin: "6px 0 0", fontSize: 14 }}>ระบบจัดการการเรียนการสอน</p>
+      {/* ── ฝั่งซ้าย: แบรนด์ + สถิติ ── */}
+      <div className="login-slide-left" style={{
+        flex: "1 1 50%",
+        background: "linear-gradient(160deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%)",
+        color: COLORS.white,
+        display: "flex", flexDirection: "column",
+        justifyContent: "space-between",
+        padding: "48px 56px",
+        position: "relative", overflow: "hidden",
+        minHeight: "100vh",
+      }}>
+        {/* decorative circles */}
+        <div style={{ position:"absolute", width:380, height:380, borderRadius:"50%", background:"rgba(255,255,255,0.07)", top:-140, right:-120 }} />
+        <div style={{ position:"absolute", width:260, height:260, borderRadius:"50%", background:"rgba(255,255,255,0.05)", bottom:-100, left:-80 }} />
+
+        <div style={{ position:"relative", zIndex:1 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom: 64 }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 12,
+              background: "rgba(255,255,255,0.18)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 22,
+            }}>🏫</div>
+            <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.3px" }}>EduClass</span>
+          </div>
+
+          <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, letterSpacing: "0.5px", marginBottom: 14 }}>
+            สำหรับสถานศึกษายุคใหม่
+          </div>
+          <h1 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.3, margin: "0 0 18px", letterSpacing: "-0.5px" }}>
+            จัดการการเรียนการสอน<br />อย่างเป็นระบบ
+          </h1>
+          <p style={{ fontSize: 15, opacity: 0.85, lineHeight: 1.7, maxWidth: 420, margin: 0 }}>
+            จัดการประกาศ แบบฝึกหัด คะแนน และการสื่อสารระหว่างครูกับนักเรียน ไว้ในที่เดียว — เพื่อให้ทุกคนโฟกัสกับการเรียนรู้
+          </p>
         </div>
 
-        <Card>
-          <div style={{ padding: 32 }}>
-            {/* Role toggle */}
-            <div style={{
-              display: "flex", background: COLORS.glassMid,
-              borderRadius: 10, padding: 4, marginBottom: 24,
-            }}>
-              {["student", "teacher"].map(r => (
-                <button key={r} onClick={() => { setRole(r); setError(""); setUsername(""); setPassword(""); }}
-                  style={{
-                    flex: 1, padding: "9px 0", border: "none", cursor: "pointer",
-                    borderRadius: 8, fontWeight: 600, fontSize: 13, fontFamily: "inherit",
-                    transition: "background 0.15s ease",
-                    background: role === r ? COLORS.navy : "transparent",
-                    color: role === r ? COLORS.white : COLORS.textSecondary,
-                  }}>
-                  {r === "student" ? "🎒 นักเรียน" : "📚 ครูผู้สอน"}
-                </button>
-              ))}
+        <div style={{ position:"relative", zIndex:1, display: "flex", gap: 36, flexWrap: "wrap" }}>
+          {[
+            { value: "100%", label: "เก็บข้อมูลปลอดภัยบนคลาวด์" },
+            { value: "24/7", label: "เข้าถึงได้ทุกที่ทุกเวลา" },
+            { value: "AI", label: "ผู้ช่วยตรวจแบบฝึกหัดอัตโนมัติ" },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 12.5, opacity: 0.8, maxWidth: 140, lineHeight: 1.5 }}>{s.label}</div>
             </div>
-
-            <Input label="อีเมล" value={username} onChange={setUsername} placeholder={role === "teacher" ? "teacher@school.ac.th" : "student@school.ac.th"} />
-            <Input label="รหัสผ่าน" value={password} onChange={setPassword} type="password" placeholder="••••••••" />
-
-            {error && (
-              <div style={{ background: COLORS.redLight, color: COLORS.red, borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, fontWeight: 600 }}>
-                ⚠️ {error}
-              </div>
-            )}
-
-            <Button onClick={handleLogin} disabled={loading} variant="primary" style={{ width: "100%", justifyContent: "center", fontSize: 15, padding: "12px 0" }}>
-              {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
-            </Button>
-
-            <div style={{ marginTop: 20, padding: 12, background: COLORS.glassMid, borderRadius: 8, fontSize: 12, color: COLORS.textSecondary, lineHeight: 1.6 }}>
-              ใช้อีเมลและรหัสผ่านที่ลงทะเบียนไว้กับระบบ
-            </div>
-          </div>
-        </Card>
+          ))}
+        </div>
       </div>
+
+      {/* ── ฝั่งขวา: ฟอร์ม login ── */}
+      <div style={{
+        flex: "1 1 50%",
+        background: COLORS.white,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 24, minHeight: "100vh",
+      }}>
+        <div className="login-slide-in" style={{ width: "100%", maxWidth: 400 }}>
+          <h2 style={{ fontSize: 26, fontWeight: 800, color: COLORS.textPrimary, margin: "0 0 8px", letterSpacing: "-0.4px" }}>
+            ยินดีต้อนรับกลับ
+          </h2>
+          <p style={{ color: COLORS.textSecondary, margin: "0 0 32px", fontSize: 14.5, lineHeight: 1.6 }}>
+            เข้าสู่ระบบเพื่อจัดการประกาศ แบบฝึกหัด และคะแนนของคุณ
+          </p>
+
+          {/* Role toggle */}
+          <div style={{
+            display: "flex", background: COLORS.glassMid,
+            borderRadius: 10, padding: 4, marginBottom: 24,
+          }}>
+            {["student", "teacher"].map(r => (
+              <button key={r} onClick={() => { setRole(r); setError(""); setUsername(""); setPassword(""); }}
+                style={{
+                  flex: 1, padding: "9px 0", border: "none", cursor: "pointer",
+                  borderRadius: 8, fontWeight: 600, fontSize: 13, fontFamily: "inherit",
+                  transition: "background 0.15s ease",
+                  background: role === r ? COLORS.navy : "transparent",
+                  color: role === r ? COLORS.white : COLORS.textSecondary,
+                }}>
+                {r === "student" ? "🎒 นักเรียน" : "📚 ครูผู้สอน"}
+              </button>
+            ))}
+          </div>
+
+          <Input label="อีเมล" value={username} onChange={setUsername} placeholder={role === "teacher" ? "teacher@school.ac.th" : "student@school.ac.th"} />
+          <Input label="รหัสผ่าน" value={password} onChange={setPassword} type="password" placeholder="••••••••" />
+
+          {error && (
+            <div style={{ background: COLORS.redLight, color: COLORS.red, borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, fontWeight: 600 }}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          <Button onClick={handleLogin} disabled={loading} variant="primary" style={{ width: "100%", justifyContent: "center", fontSize: 15, padding: "13px 0" }}>
+            {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+          </Button>
+
+          <div style={{ marginTop: 24, padding: 14, background: COLORS.glassMid, borderRadius: 10, fontSize: 12.5, color: COLORS.textSecondary, lineHeight: 1.6, textAlign: "center" }}>
+            ใช้อีเมลและรหัสผ่านที่ลงทะเบียนไว้กับระบบ
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');
+
+        @keyframes loginSlideFromLeft {
+          0% { opacity: 0; transform: translateX(-40px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        .login-slide-left {
+          animation: loginSlideFromLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes loginSlideFromRight {
+          0% { opacity: 0; transform: translateX(40px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        .login-slide-in {
+          animation: loginSlideFromRight 0.6s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @media (max-width: 860px) {
+          .login-slide-left { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -1779,7 +1852,7 @@ export default function App() {
   const isTeacher = user.role === "teacher";
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: G.mesh, fontFamily: "'Sarabun', system-ui, sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: G.mesh, fontFamily: "'Plus Jakarta Sans','Noto Sans Thai', system-ui, sans-serif" }}>
       <Sidebar user={user} page={activeExercise ? "exercises" : page} setPage={p => { setPage(p); setActiveExercise(null); }}
         onLogout={handleLogout}
         mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
@@ -1851,7 +1924,7 @@ export default function App() {
       </main>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
         body { margin: 0; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -1859,14 +1932,6 @@ export default function App() {
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
         input::placeholder, textarea::placeholder { color: #94A3B8; }
-
-        @keyframes loginSlideIn {
-          0% { opacity: 0; transform: translateY(28px) scale(0.98); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .login-slide-in {
-          animation: loginSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
 
         @media (max-width: 700px) {
           main { margin-left: 0 !important; padding: 20px 14px !important; }
