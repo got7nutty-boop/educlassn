@@ -2,77 +2,77 @@ import { useState, useEffect, useRef } from "react";
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
 
 // ── Design tokens ──────────────────────────────────────────────────────────
-// Palette: deep navy (#0F1B3C) + warm saffron (#F5A623) + soft jade (#3DBCA1)
-// + off-white (#F7F4EE) + slate (#5C6B8A)
-// Type: system-ui body, heavier weights for display, mono for scores/numbers
-// Signature: colour-coded role "badge bar" along the top edge of every card
+// Palette: ฟ้า (#2563EB) + ขาว (#FFFFFF) — เรียบง่าย สะอาด สไตล์ออฟฟิศ
+// Type: system-ui body
+// Signature: เส้นกรอบบาง + เงาเบา ไม่มี glow effect
 
-// ── AI-Era Design System — Soft Navy ─────────────────────────────────────
 const COLORS = {
-  // Soft navy base (ไม่มืดเกินไป อ่านง่าย)
-  navy: "#0F172A",
-  navyLight: "#1E293B",
-  navyMid: "#162032",
+  // โทนหลัก — ฟ้า-ขาว
+  navy: "#2563EB",        // ฟ้าหลัก (ใช้แทนที่ navy เดิม)
+  navyLight: "#3B82F6",
+  navyMid: "#F8FAFC",     // พื้นหลังการ์ด (ขาวอมฟ้าอ่อนมาก)
 
-  // Accent neon (ลด intensity ลง)
-  cyan: "#38BDF8",
-  cyanDim: "#0EA5E9",
-  cyanGlow: "rgba(56,189,248,0.12)",
-  cyanBorder: "rgba(56,189,248,0.25)",
+  // Accent — ใช้ฟ้าเฉดเดียวแทนสีสันหลากหลาย
+  cyan: "#2563EB",
+  cyanDim: "#1D4ED8",
+  cyanGlow: "rgba(37,99,235,0.08)",
+  cyanBorder: "rgba(37,99,235,0.3)",
 
-  violet: "#818CF8",
-  violetLight: "#A5B4FC",
-  violetGlow: "rgba(129,140,248,0.15)",
+  violet: "#2563EB",
+  violetLight: "#60A5FA",
+  violetGlow: "rgba(37,99,235,0.08)",
 
-  emerald: "#34D399",
-  emeraldLight: "#6EE7B7",
-  emeraldGlow: "rgba(52,211,153,0.12)",
+  emerald: "#2563EB",
+  emeraldLight: "#60A5FA",
+  emeraldGlow: "rgba(37,99,235,0.08)",
 
-  amber: "#FBBF24",
-  amberLight: "#FDE68A",
-  amberGlow: "rgba(251,191,36,0.12)",
+  amber: "#2563EB",
+  amberLight: "#60A5FA",
+  amberGlow: "rgba(37,99,235,0.08)",
 
-  // Card surfaces (สว่างขึ้น มีความลึก)
-  glass: "#1E293B",           // card bg หลัก — navy กลาง
-  glassBorder: "rgba(148,163,184,0.12)",
-  glassBorderBright: "rgba(148,163,184,0.25)",
-  glassMid: "#253347",        // card bg รอง
+  // การ์ด/พื้นผิว — ขาวล้วน มีเส้นกรอบบาง
+  glass: "#FFFFFF",
+  glassBorder: "#E2E8F0",
+  glassBorderBright: "#CBD5E1",
+  glassMid: "#F1F5F9",
 
-  // Text — readable contrast
+  // ตัวอักษร — เข้มบนพื้นขาว อ่านง่ายสุด
   white: "#FFFFFF",
-  textPrimary: "#E2E8F0",     // ขาวนวล อ่านสบาย
-  textSecondary: "#94A3B8",   // เทาอ่อน
-  textMuted: "#64748B",       // เทาหม่น
+  textPrimary: "#0F172A",
+  textSecondary: "#475569",
+  textMuted: "#94A3B8",
 
-  // Status
-  red: "#F87171",
-  redGlow: "rgba(248,113,113,0.12)",
-  green: "#34D399",
-  greenGlow: "rgba(52,211,153,0.12)",
+  // สถานะ (คงสีแดง/เขียวไว้เพื่อความชัดเจนของผิด/ถูก)
+  red: "#DC2626",
+  redGlow: "rgba(220,38,38,0.08)",
+  green: "#16A34A",
+  greenGlow: "rgba(22,163,74,0.08)",
 
   // Legacy aliases
-  saffron: "#FBBF24",
-  saffronLight: "rgba(251,191,36,0.15)",
-  jade: "#34D399",
-  jadeLight: "rgba(52,211,153,0.12)",
-  bg: "#0F172A",
-  slate: "#94A3B8",
-  slateLight: "rgba(148,163,184,0.1)",
-  redLight: "rgba(248,113,113,0.12)",
-  greenLight: "rgba(52,211,153,0.12)",
+  saffron: "#2563EB",
+  saffronLight: "rgba(37,99,235,0.08)",
+  jade: "#2563EB",
+  jadeLight: "rgba(37,99,235,0.08)",
+  bg: "#F1F5F9",
+  slate: "#475569",
+  slateLight: "rgba(71,85,105,0.08)",
+  redLight: "rgba(220,38,38,0.08)",
+  greenLight: "rgba(22,163,74,0.08)",
+
+  // Aliases เพิ่มเติมที่ใช้ใน Sidebar และส่วนอื่น (กันพลาด undefined)
+  border: "#E2E8F0",
+  blue: "#2563EB",
+  blueLight: "#EFF6FF",
 };
 
-// Gradient presets
+// Gradient presets — ใช้สีฟ้าเฉดเดียวแทน gradient หลายสี
 const G = {
-  cyan: "linear-gradient(135deg, #38BDF8, #818CF8)",
-  emerald: "linear-gradient(135deg, #34D399, #38BDF8)",
-  amber: "linear-gradient(135deg, #FBBF24, #F87171)",
-  violet: "linear-gradient(135deg, #818CF8, #C084FC)",
-  mesh: `radial-gradient(ellipse at 15% 40%, rgba(129,140,248,0.08) 0%, transparent 55%),
-         radial-gradient(ellipse at 85% 15%, rgba(56,189,248,0.07) 0%, transparent 50%),
-         radial-gradient(ellipse at 55% 85%, rgba(52,211,153,0.06) 0%, transparent 50%),
-         #0F172A`,
-  sidebarBg: `linear-gradient(180deg, #131E30 0%, #0F172A 100%)`,
+  cyan: "#2563EB",
+  emerald: "#2563EB",
+  amber: "#2563EB",
+  violet: "#2563EB",
+  mesh: "#F1F5F9",
+  sidebarBg: "#FFFFFF",
 };
 
 // ── Data helpers ─────────────────────────────────────────────────────────
@@ -166,31 +166,26 @@ function RoleBadge({ role }) {
   const isTeacher = role === "teacher";
   return (
     <span style={{
-      background: isTeacher
-        ? "linear-gradient(135deg,#F59E0B,#EF4444)"
-        : "linear-gradient(135deg,#10B981,#00D4FF)",
-      color: COLORS.white,
-      fontSize: 10, fontWeight: 800, letterSpacing: 1.5,
-      padding: "3px 10px", borderRadius: 20, textTransform: "uppercase",
-      boxShadow: isTeacher ? "0 0 12px rgba(245,158,11,0.4)" : "0 0 12px rgba(16,185,129,0.4)",
+      background: isTeacher ? COLORS.amberLight : COLORS.blueLight,
+      color: isTeacher ? COLORS.amber : COLORS.blue,
+      fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+      padding: "3px 10px", borderRadius: 20,
     }}>
       {isTeacher ? "ครู" : "นักเรียน"}
     </span>
   );
 }
 
-function Card({ children, style, accent, glow }) {
+function Card({ children, style, accent }) {
   return (
     <div style={{
       background: COLORS.glass,
-      borderRadius: 18,
+      borderRadius: 12,
       border: `1px solid ${COLORS.glassBorder}`,
-      boxShadow: glow
-        ? `0 0 24px ${glow}, 0 4px 24px rgba(0,0,0,0.25)`
-        : "0 2px 16px rgba(0,0,0,0.2)",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
       overflow: "hidden",
       position: "relative",
-      transition: "all 0.25s ease",
+      transition: "box-shadow 0.2s ease",
       ...style,
     }}>
       {accent && (
@@ -208,42 +203,19 @@ function Button({ children, onClick, variant = "primary", size = "md", disabled,
   const base = {
     border: "1px solid transparent",
     cursor: disabled ? "not-allowed" : "pointer",
-    borderRadius: 12, fontWeight: 700, transition: "all 0.2s ease",
+    borderRadius: 8, fontWeight: 600, transition: "background 0.15s ease",
     fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6,
-    opacity: disabled ? 0.45 : 1,
+    opacity: disabled ? 0.5 : 1,
     fontSize: size === "sm" ? 12 : 14,
-    padding: size === "sm" ? "6px 14px" : "10px 22px",
-    letterSpacing: "0.3px",
-    position: "relative",
-    overflow: "hidden",
+    padding: size === "sm" ? "6px 14px" : "10px 20px",
     ...style,
   };
   const variants = {
-    primary: {
-      background: G.cyan, color: COLORS.white,
-      boxShadow: "0 0 20px rgba(0,212,255,0.3)",
-      borderColor: "transparent",
-    },
-    saffron: {
-      background: G.amber, color: COLORS.white,
-      boxShadow: "0 0 20px rgba(245,158,11,0.3)",
-      borderColor: "transparent",
-    },
-    jade: {
-      background: G.emerald, color: COLORS.white,
-      boxShadow: "0 0 20px rgba(16,185,129,0.3)",
-      borderColor: "transparent",
-    },
-    ghost: {
-      background: COLORS.glass, color: COLORS.textPrimary,
-      border: `1px solid ${COLORS.glassBorder}`,
-      backdropFilter: "blur(8px)",
-    },
-    danger: {
-      background: "linear-gradient(135deg,#EF4444,#DC2626)", color: COLORS.white,
-      boxShadow: "0 0 20px rgba(239,68,68,0.3)",
-      borderColor: "transparent",
-    },
+    primary: { background: COLORS.navy, color: COLORS.white },
+    saffron: { background: COLORS.navy, color: COLORS.white },
+    jade: { background: COLORS.navy, color: COLORS.white },
+    ghost: { background: COLORS.glassMid, color: COLORS.textPrimary, border: `1px solid ${COLORS.glassBorder}` },
+    danger: { background: COLORS.red, color: COLORS.white },
   };
   return <button style={{ ...base, ...variants[variant] }} onClick={onClick} disabled={disabled}>{children}</button>;
 }
@@ -251,29 +223,21 @@ function Button({ children, onClick, variant = "primary", size = "md", disabled,
 function Input({ label, value, onChange, type = "text", placeholder }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      {label && <label style={{ display: "block", fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6, fontSize: 13, letterSpacing: "0.5px", textTransform: "uppercase" }}>{label}</label>}
+      {label && <label style={{ display: "block", fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6, fontSize: 13 }}>{label}</label>}
       <input
         type={type} value={value} onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         style={{
           width: "100%", boxSizing: "border-box",
           border: `1px solid ${COLORS.glassBorder}`,
-          borderRadius: 12,
-          padding: "11px 16px", fontSize: 14, fontFamily: "inherit",
-          background: COLORS.navyMid,
+          borderRadius: 8,
+          padding: "10px 14px", fontSize: 14, fontFamily: "inherit",
+          background: COLORS.white,
           color: COLORS.textPrimary,
-          outline: "none", transition: "all 0.2s ease",
+          outline: "none", transition: "border-color 0.15s ease",
         }}
-        onFocus={e => {
-          e.target.style.borderColor = COLORS.cyan;
-          e.target.style.boxShadow = `0 0 0 3px ${COLORS.cyanGlow}`;
-          e.target.style.background = COLORS.glassMid;
-        }}
-        onBlur={e => {
-          e.target.style.borderColor = COLORS.glassBorder;
-          e.target.style.boxShadow = "none";
-          e.target.style.background = COLORS.navyMid;
-        }}
+        onFocus={e => { e.target.style.borderColor = COLORS.navy; }}
+        onBlur={e => { e.target.style.borderColor = COLORS.glassBorder; }}
       />
     </div>
   );
@@ -282,26 +246,20 @@ function Input({ label, value, onChange, type = "text", placeholder }) {
 function Textarea({ label, value, onChange, placeholder, rows = 4 }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      {label && <label style={{ display: "block", fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6, fontSize: 13, letterSpacing: "0.5px", textTransform: "uppercase" }}>{label}</label>}
+      {label && <label style={{ display: "block", fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6, fontSize: 13 }}>{label}</label>}
       <textarea
         value={value} onChange={e => onChange(e.target.value)}
         placeholder={placeholder} rows={rows}
         style={{
           width: "100%", boxSizing: "border-box",
-          border: `1px solid ${COLORS.glassBorder}`, borderRadius: 12,
-          padding: "11px 16px", fontSize: 14, fontFamily: "inherit",
-          background: COLORS.navyMid,
+          border: `1px solid ${COLORS.glassBorder}`, borderRadius: 8,
+          padding: "10px 14px", fontSize: 14, fontFamily: "inherit",
+          background: COLORS.white,
           color: COLORS.textPrimary, resize: "vertical",
-          outline: "none", transition: "all 0.2s ease",
+          outline: "none", transition: "border-color 0.15s ease",
         }}
-        onFocus={e => {
-          e.target.style.borderColor = COLORS.cyan;
-          e.target.style.boxShadow = `0 0 0 3px ${COLORS.cyanGlow}`;
-        }}
-        onBlur={e => {
-          e.target.style.borderColor = COLORS.glassBorder;
-          e.target.style.boxShadow = "none";
-        }}
+        onFocus={e => { e.target.style.borderColor = COLORS.navy; }}
+        onBlur={e => { e.target.style.borderColor = COLORS.glassBorder; }}
       />
     </div>
   );
@@ -357,49 +315,38 @@ function LoginScreen({ onLogin }) {
   return (
     <div style={{
       minHeight: "100vh",
-      background: G.mesh,
+      background: COLORS.bg,
       display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-      position: "relative", overflow: "hidden",
     }}>
-      {/* Ambient orbs */}
-      <div style={{ position:"absolute", width:600, height:600, borderRadius:"50%", background:"radial-gradient(circle,rgba(124,58,237,0.08),transparent 70%)", top:-200, right:-200, pointerEvents:"none" }} />
-      <div style={{ position:"absolute", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,212,255,0.07),transparent 70%)", bottom:-100, left:-100, pointerEvents:"none" }} />
-
-      <div style={{ width: "100%", maxWidth: 440, position: "relative", zIndex: 1 }}>
+      <div className="login-slide-in" style={{ width: "100%", maxWidth: 420 }}>
         {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{
-            width: 80, height: 80, borderRadius: 24,
-            background: G.cyan,
-            margin: "0 auto 20px",
+            width: 64, height: 64, borderRadius: 16,
+            background: COLORS.navy,
+            margin: "0 auto 16px",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 38,
-            boxShadow: "0 0 40px rgba(0,212,255,0.4), 0 20px 40px rgba(0,0,0,0.4)",
+            fontSize: 30,
           }}>🏫</div>
-          <h1 style={{ color: COLORS.white, fontSize: 32, fontWeight: 900, margin: 0, letterSpacing: "-0.5px" }}>EduClass</h1>
-          <p style={{ color: COLORS.textMuted, margin: "8px 0 0", fontSize: 14, letterSpacing: "1px", textTransform: "uppercase" }}>ระบบจัดการการเรียนการสอน</p>
+          <h1 style={{ color: COLORS.textPrimary, fontSize: 26, fontWeight: 800, margin: 0 }}>EduClass</h1>
+          <p style={{ color: COLORS.textSecondary, margin: "6px 0 0", fontSize: 14 }}>ระบบจัดการการเรียนการสอน</p>
         </div>
 
-        <Card accent={role === "teacher" ? G.amber : G.emerald} glow={role === "teacher" ? "rgba(245,158,11,0.15)" : "rgba(16,185,129,0.15)"}>
-          <div style={{ padding: 36 }}>
+        <Card>
+          <div style={{ padding: 32 }}>
             {/* Role toggle */}
             <div style={{
-              display: "flex", background: "rgba(255,255,255,0.04)",
-              borderRadius: 14, padding: 5, marginBottom: 32,
-              border: `1px solid ${COLORS.glassBorder}`,
+              display: "flex", background: COLORS.glassMid,
+              borderRadius: 10, padding: 4, marginBottom: 24,
             }}>
               {["student", "teacher"].map(r => (
                 <button key={r} onClick={() => { setRole(r); setError(""); setUsername(""); setPassword(""); }}
                   style={{
-                    flex: 1, padding: "10px 0", border: "none", cursor: "pointer",
-                    borderRadius: 10, fontWeight: 700, fontSize: 13, fontFamily: "inherit",
-                    transition: "all 0.25s ease",
-                    background: role === r
-                      ? (r === "teacher" ? G.amber : G.emerald)
-                      : "transparent",
-                    color: COLORS.white,
-                    opacity: role === r ? 1 : 0.45,
-                    boxShadow: role === r ? (r === "teacher" ? "0 0 20px rgba(245,158,11,0.4)" : "0 0 20px rgba(16,185,129,0.4)") : "none",
+                    flex: 1, padding: "9px 0", border: "none", cursor: "pointer",
+                    borderRadius: 8, fontWeight: 600, fontSize: 13, fontFamily: "inherit",
+                    transition: "background 0.15s ease",
+                    background: role === r ? COLORS.navy : "transparent",
+                    color: role === r ? COLORS.white : COLORS.textSecondary,
                   }}>
                   {r === "student" ? "🎒 นักเรียน" : "📚 ครูผู้สอน"}
                 </button>
@@ -410,17 +357,17 @@ function LoginScreen({ onLogin }) {
             <Input label="รหัสผ่าน" value={password} onChange={setPassword} type="password" placeholder="••••••••" />
 
             {error && (
-              <div style={{ background: COLORS.redGlow, color: "#FCA5A5", borderRadius: 10, padding: "10px 16px", marginBottom: 16, fontSize: 13, fontWeight: 600, border: `1px solid rgba(239,68,68,0.3)` }}>
+              <div style={{ background: COLORS.redLight, color: COLORS.red, borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, fontWeight: 600 }}>
                 ⚠️ {error}
               </div>
             )}
 
-            <Button onClick={handleLogin} disabled={loading} variant={role === "teacher" ? "saffron" : "jade"} style={{ width: "100%", justifyContent: "center", fontSize: 15, padding: "13px 0" }}>
-              {loading ? "⏳ กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ →"}
+            <Button onClick={handleLogin} disabled={loading} variant="primary" style={{ width: "100%", justifyContent: "center", fontSize: 15, padding: "12px 0" }}>
+              {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
             </Button>
 
-            <div style={{ marginTop: 24, padding: 14, background: "rgba(255,255,255,0.03)", borderRadius: 12, fontSize: 12, color: COLORS.textMuted, border: `1px solid ${COLORS.glassBorder}`, lineHeight: 1.6 }}>
-              <strong style={{ color: COLORS.textSecondary }}>Supabase Auth:</strong> ใช้อีเมลและรหัสผ่านจาก Authentication
+            <div style={{ marginTop: 20, padding: 12, background: COLORS.glassMid, borderRadius: 8, fontSize: 12, color: COLORS.textSecondary, lineHeight: 1.6 }}>
+              ใช้อีเมลและรหัสผ่านที่ลงทะเบียนไว้กับระบบ
             </div>
           </div>
         </Card>
@@ -446,58 +393,50 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
       {/* Overlay for mobile */}
       {mobileOpen && (
         <div onClick={() => setMobileOpen(false)} style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 90,
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 90,
         }} />
       )}
       <aside style={{
-        width: 260,
-        background: G.sidebarBg,
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        width: 250,
+        background: COLORS.white,
         display: "flex", flexDirection: "column",
         position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
         transform: mobileOpen ? "translateX(0)" : undefined,
-        transition: "transform .3s cubic-bezier(0.4,0,0.2,1)",
-        borderRight: `1px solid ${COLORS.glassBorder}`,
-        boxShadow: "8px 0 40px rgba(0,0,0,0.5)",
+        transition: "transform .25s ease",
+        borderRight: `1px solid ${COLORS.border}`,
       }}>
-        {/* Ambient glow top */}
-        <div style={{ position:"absolute", top:0, left:0, right:0, height:200, background:"radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.06), transparent 70%)", pointerEvents:"none" }} />
-
         {/* Header */}
-        <div style={{ padding: "28px 20px 24px", borderBottom: `1px solid ${COLORS.glassBorder}`, position:"relative" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+        <div style={{ padding: "24px 20px 20px", borderBottom: `1px solid ${COLORS.border}` }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:18 }}>
             <div style={{
-              width: 40, height: 40, borderRadius: 12,
-              background: G.cyan,
+              width: 38, height: 38, borderRadius: 10,
+              background: COLORS.blue,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 20, flexShrink:0,
-              boxShadow: "0 0 20px rgba(0,212,255,0.4)",
+              fontSize: 18, flexShrink:0,
             }}>🏫</div>
             <div>
-              <div style={{ fontWeight: 900, color: COLORS.white, fontSize: 18, letterSpacing:"-0.3px" }}>EduClass</div>
-              <div style={{ fontSize:11, color: COLORS.textMuted, letterSpacing:"1px", textTransform:"uppercase" }}>AI Learning Platform</div>
+              <div style={{ fontWeight: 800, color: COLORS.textPrimary, fontSize: 17 }}>EduClass</div>
+              <div style={{ fontSize:11, color: COLORS.textMuted }}>ระบบจัดการการเรียนการสอน</div>
             </div>
           </div>
 
           {/* User card */}
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
-            padding: "12px 14px", borderRadius: 14,
-            background: "rgba(255,255,255,0.05)",
-            border: `1px solid ${COLORS.glassBorder}`,
+            padding: "10px 12px", borderRadius: 10,
+            background: COLORS.bg,
+            border: `1px solid ${COLORS.border}`,
           }}>
             <div style={{
-              width: 38, height: 38, borderRadius: "50%",
-              background: isTeacher ? G.amber : G.emerald,
+              width: 36, height: 36, borderRadius: "50%",
+              background: isTeacher ? COLORS.amber : COLORS.blue,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 800, color: COLORS.white, fontSize: 16, flexShrink:0,
-              boxShadow: isTeacher ? "0 0 14px rgba(245,158,11,0.4)" : "0 0 14px rgba(16,185,129,0.4)",
+              fontWeight: 700, color: COLORS.white, fontSize: 15, flexShrink:0,
             }}>
               {user.name.charAt(0)}
             </div>
             <div style={{ minWidth:0 }}>
-              <div style={{ color: COLORS.textPrimary, fontSize: 13, fontWeight: 700, lineHeight: 1.3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              <div style={{ color: COLORS.textPrimary, fontSize: 13, fontWeight: 600, lineHeight: 1.3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {user.name.length > 14 ? user.name.slice(0, 14) + "…" : user.name}
               </div>
               <RoleBadge role={user.role} />
@@ -506,60 +445,41 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: "16px 12px", overflowY: "auto" }}>
-          {/* Section label */}
-          <div style={{ fontSize:10, color: COLORS.textMuted, fontWeight:800, letterSpacing:"1.5px", textTransform:"uppercase", padding:"0 10px", marginBottom:8 }}>เมนูหลัก</div>
-
+        <nav style={{ flex: 1, padding: "14px 10px", overflowY: "auto" }}>
           {nav.map(n => {
             const active = page === n.id;
             return (
               <button key={n.id} onClick={() => { setPage(n.id); setMobileOpen(false); }}
                 style={{
                   display: "flex", alignItems: "center", gap: 12,
-                  width: "100%", padding: "11px 14px", borderRadius: 12,
-                  border: active ? `1px solid ${isTeacher ? "rgba(245,158,11,0.3)" : "rgba(16,185,129,0.3)"}` : "1px solid transparent",
+                  width: "100%", padding: "10px 14px", borderRadius: 8,
+                  border: "none",
                   cursor: "pointer", fontFamily: "inherit",
-                  fontWeight: active ? 700 : 500, fontSize: 13,
-                  marginBottom: 3,
-                  background: active
-                    ? (isTeacher ? "rgba(245,158,11,0.12)" : "rgba(16,185,129,0.12)")
-                    : "transparent",
-                  color: active ? COLORS.white : COLORS.textMuted,
-                  textAlign: "left", transition: "all 0.2s ease",
-                  position: "relative",
+                  fontWeight: active ? 700 : 500, fontSize: 13.5,
+                  marginBottom: 2,
+                  background: active ? COLORS.blueLight : "transparent",
+                  color: active ? COLORS.blue : COLORS.textSecondary,
+                  textAlign: "left", transition: "background 0.15s ease",
                 }}>
-                {/* Active indicator */}
-                {active && (
-                  <div style={{
-                    position:"absolute", left:0, top:"50%", transform:"translateY(-50%)",
-                    width:3, height:"60%", borderRadius:"0 3px 3px 0",
-                    background: isTeacher ? G.amber : G.emerald,
-                    boxShadow: isTeacher ? "0 0 8px rgba(245,158,11,0.6)" : "0 0 8px rgba(16,185,129,0.6)",
-                  }} />
-                )}
-                <span style={{
-                  fontSize: 17,
-                  filter: active ? "none" : "grayscale(30%)",
-                  opacity: active ? 1 : 0.6,
-                }}>{n.icon}</span>
+                <span style={{ fontSize: 16 }}>{n.icon}</span>
                 {n.label}
               </button>
             );
           })}
         </nav>
 
-        <div style={{ padding: "16px 12px", borderTop: `1px solid ${COLORS.glassBorder}` }}>
+        <div style={{ padding: "14px 10px", borderTop: `1px solid ${COLORS.border}` }}>
           <button onClick={onLogout} style={{
-            width: "100%", padding: "10px 14px", borderRadius: 12,
-            border: `1px solid ${COLORS.glassBorder}`,
-            background: "rgba(239,68,68,0.06)",
-            color: "rgba(239,68,68,0.7)",
+            width: "100%", padding: "10px 14px", borderRadius: 8,
+            border: `1px solid ${COLORS.border}`,
+            background: COLORS.white,
+            color: COLORS.red,
             cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 13,
             display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-            transition: "all 0.2s ease",
+            transition: "background 0.15s ease",
           }}
-          onMouseEnter={e => { e.target.style.background="rgba(239,68,68,0.12)"; e.target.style.color="#EF4444"; }}
-          onMouseLeave={e => { e.target.style.background="rgba(239,68,68,0.06)"; e.target.style.color="rgba(239,68,68,0.7)"; }}>
+          onMouseEnter={e => { e.target.style.background=COLORS.redLight; }}
+          onMouseLeave={e => { e.target.style.background=COLORS.white; }}>
             🚪 ออกจากระบบ
           </button>
         </div>
@@ -573,22 +493,22 @@ function BackButton({ onClick, label = "กลับสู่แดชบอร�
   return (
     <button onClick={onClick} style={{
       display: "inline-flex", alignItems: "center", gap: 8,
-      background: COLORS.glass,
-      border: `1px solid ${COLORS.glassBorder}`,
-      borderRadius: 12, padding: "9px 16px",
+      background: COLORS.white,
+      border: `1px solid ${COLORS.border}`,
+      borderRadius: 10, padding: "9px 16px",
       color: COLORS.textSecondary, fontWeight: 600, fontSize: 13,
       cursor: "pointer", fontFamily: "inherit",
       marginBottom: 20, transition: "all 0.2s ease",
     }}
     onMouseEnter={e => {
-      e.currentTarget.style.borderColor = COLORS.cyanBorder;
-      e.currentTarget.style.color = COLORS.textPrimary;
-      e.currentTarget.style.background = COLORS.cyanGlow;
+      e.currentTarget.style.borderColor = COLORS.blue;
+      e.currentTarget.style.color = COLORS.blue;
+      e.currentTarget.style.background = COLORS.blueLight;
     }}
     onMouseLeave={e => {
-      e.currentTarget.style.borderColor = COLORS.glassBorder;
+      e.currentTarget.style.borderColor = COLORS.border;
       e.currentTarget.style.color = COLORS.textSecondary;
-      e.currentTarget.style.background = COLORS.glass;
+      e.currentTarget.style.background = COLORS.white;
     }}>
       <span style={{ fontSize: 15 }}>←</span> {label}
     </button>
@@ -933,7 +853,7 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
         const commentsOpen = !!openComments[a.id];
 
         return (
-          <Card key={a.id} accent={a.pinned ? COLORS.amber : null} style={{ marginBottom: 16 }} glow={a.pinned ? COLORS.amberGlow : null}>
+          <Card key={a.id} accent={a.pinned ? COLORS.amber : null} style={{ marginBottom: 16 }}>
             {/* Post header */}
             <div style={{ padding: "16px 18px 12px", display: "flex", alignItems: "flex-start", gap: 12 }}>
               <div style={{
@@ -1825,30 +1745,32 @@ export default function App() {
 
   if (authLoading) return (
     <div style={{
-      minHeight: "100vh", background: G.mesh,
+      minHeight: "100vh", background: COLORS.bg,
       display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20,
-      position: "relative", overflow: "hidden",
     }}>
-      <div style={{ position:"absolute", width:500, height:500, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,212,255,0.06),transparent 70%)", top:"50%", left:"50%", transform:"translate(-50%,-50%)", pointerEvents:"none" }} />
       <div style={{
-        width: 80, height: 80, borderRadius: 24,
-        background: G.cyan,
+        width: 64, height: 64, borderRadius: 16,
+        background: COLORS.blue,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 38,
-        boxShadow: "0 0 40px rgba(0,212,255,0.5)",
-        animation: "pulse 2s infinite",
+        fontSize: 30,
       }}>🏫</div>
-      <div style={{ color: COLORS.textPrimary, fontSize: 18, fontWeight: 700 }}>กำลังโหลด...</div>
+      <div style={{ color: COLORS.textPrimary, fontSize: 16, fontWeight: 600 }}>กำลังโหลด...</div>
       <div style={{ display:"flex", gap:6 }}>
         {[0,1,2].map(i => (
           <div key={i} style={{
-            width:8, height:8, borderRadius:"50%",
-            background: COLORS.cyan,
-            opacity: 0.6,
-            animation: `bounce 1.2s ${i*0.2}s infinite`,
+            width:7, height:7, borderRadius:"50%",
+            background: COLORS.blue,
+            opacity: 0.5,
+            animation: `loadingDot 1s ${i*0.15}s infinite ease-in-out`,
           }} />
         ))}
       </div>
+      <style>{`
+        @keyframes loadingDot {
+          0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+          40% { opacity: 1; transform: scale(1.15); }
+        }
+      `}</style>
     </div>
   );
 
@@ -1864,19 +1786,13 @@ export default function App() {
 
       {/* Main content */}
       <main style={{ marginLeft: 260, flex: 1, padding: "36px 32px", minHeight: "100vh", position:"relative" }}>
-        {/* Background grid */}
-        <div style={{
-          position:"fixed", inset:0, zIndex:0, pointerEvents:"none", marginLeft:260,
-          backgroundImage:`linear-gradient(rgba(148,163,184,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,0.04) 1px,transparent 1px)`,
-          backgroundSize:"40px 40px",
-        }} />
-        <div style={{ position:"relative", zIndex:1 }}>
+        <div>
         {/* Mobile hamburger */}
         <button onClick={() => setMobileOpen(true)} style={{
           display: "none", position: "fixed", top: 16, left: 16, zIndex: 80,
-          background: G.cyan, border: "none", borderRadius: 12, padding: "8px 14px",
+          background: COLORS.navy, border: "none", borderRadius: 10, padding: "8px 14px",
           color: COLORS.white, cursor: "pointer", fontSize: 20,
-          boxShadow: "0 0 20px rgba(0,212,255,0.4)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
         }}>☰</button>
 
         {page === "dashboard" && !activeExercise && (
@@ -1937,20 +1853,21 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800;900&display=swap');
         * { box-sizing: border-box; }
-        body { margin: 0; color-scheme: dark; }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        body { margin: 0; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.3); }
-        input::placeholder, textarea::placeholder { color: rgba(139,157,195,0.5); }
-        @keyframes pulse {
-          0%, 100% { box-shadow: 0 0 40px rgba(0,212,255,0.5); }
-          50% { box-shadow: 0 0 60px rgba(0,212,255,0.8); }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        input::placeholder, textarea::placeholder { color: #94A3B8; }
+
+        @keyframes loginSlideIn {
+          0% { opacity: 0; transform: translateY(28px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes bounce {
-          0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
-          40% { transform: scale(1.2); opacity: 1; }
+        .login-slide-in {
+          animation: loginSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
+
         @media (max-width: 700px) {
           main { margin-left: 0 !important; padding: 20px 14px !important; }
           button[aria-label="menu"] { display: flex !important; }
