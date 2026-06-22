@@ -160,6 +160,22 @@ const dbToComment = (r) => ({
   text: r.text, date: formatDate(r.created_at),
 });
 
+const dbToLesson = (r) => ({
+  id: r.id, title: r.title, subject: r.subject,
+  author: r.author_name, authorId: r.author_id,
+  description: r.description,
+  videoUrl: r.video_url || "", fileUrl: r.file_url || "", fileName: r.file_name || "",
+  date: formatDate(r.created_at),
+});
+
+// helper: แปลงลิงก์ YouTube ทั่วไปให้เป็นลิงก์ embed
+const toEmbedUrl = (url) => {
+  if (!url) return "";
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  return url;
+};
+
 // ── Components ─────────────────────────────────────────────────────────────
 
 function RoleBadge({ role }) {
@@ -455,9 +471,12 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
   const nav = [
     { id: "dashboard", label: "แดชบอร์ด" },
     { id: "announcements", label: "ประกาศ/ข่าวสาร" },
+    { id: "lessons", label: "เนื้อหาการเรียน" },
     { id: "messages", label: "ส่งข้อความ" },
     { id: "exercises", label: "แบบฝึกหัด" },
     ...(isTeacher ? [{ id: "results", label: "ผลการทำแบบฝึกหัด" }] : [{ id: "myscores", label: "คะแนนของฉัน" }]),
+    ...(isTeacher ? [{ id: "users", label: "ผู้ใช้งาน" }] : []),
+    { id: "help", label: "ศูนย์ช่วยเหลือ" },
     { id: "settings", label: "ตั้งค่า" },
   ];
 
@@ -1645,6 +1664,281 @@ function Settings({ user, onSave }) {
   );
 }
 
+// ── Learning Content (เนื้อหาการเรียน) ──────────────────────────────────────
+function LearningContent({ user, lessons, onAdd, onDelete }) {
+  const isTeacher = user.role === "teacher";
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [fileObj, setFileObj] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { alert("ขนาดไฟล์ต้องไม่เกิน 10MB"); return; }
+    setFileObj(file);
+  };
+
+  const handleCreate = async () => {
+    if (!title.trim()) return;
+    setSaving(true);
+    await onAdd({ title, description, subject: user.subject, author: user.name, authorId: user.id, videoUrl, file: fileObj });
+    setTitle(""); setDescription(""); setVideoUrl(""); setFileObj(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setShowForm(false); setSaving(false);
+  };
+
+  if (selected) {
+    return (
+      <div>
+        <Button onClick={() => setSelected(null)} variant="ghost" size="sm" style={{ marginBottom: 20 }}>← กลับ</Button>
+        <Card>
+          <div style={{ padding: 24 }}>
+            <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 6 }}>{selected.subject} · {selected.author}</div>
+            <h2 style={{ color: COLORS.textPrimary, margin: "0 0 14px" }}>{selected.title}</h2>
+
+            {selected.videoUrl && (
+              <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 12, overflow: "hidden", marginBottom: 18, background: COLORS.navyMid }}>
+                <iframe
+                  src={toEmbedUrl(selected.videoUrl)}
+                  title={selected.title}
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                  allowFullScreen
+                />
+              </div>
+            )}
+
+            {selected.description && (
+              <p style={{ color: COLORS.textSecondary, lineHeight: 1.7, margin: "0 0 18px" }}>{selected.description}</p>
+            )}
+
+            {selected.fileUrl && (
+              <a href={selected.fileUrl} target="_blank" rel="noreferrer" style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "10px 16px", borderRadius: 10,
+                background: COLORS.blueLight, color: COLORS.blue,
+                fontWeight: 600, fontSize: 14, textDecoration: "none",
+              }}>
+                ดาวน์โหลดเอกสาร: {selected.fileName || "ไฟล์ประกอบบทเรียน"}
+              </a>
+            )}
+
+            {isTeacher && selected.authorId === user.id && (
+              <div style={{ marginTop: 20 }}>
+                <Button onClick={() => { if (window.confirm("ลบบทเรียนนี้?")) { onDelete(selected.id); setSelected(null); } }} variant="danger" size="sm">ลบบทเรียน</Button>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>เนื้อหาการเรียน</h2>
+        {isTeacher && <Button onClick={() => setShowForm(!showForm)} variant="saffron">เพิ่มบทเรียน</Button>}
+      </div>
+
+      {isTeacher && showForm && (
+        <Card accent={COLORS.saffron} style={{ marginBottom: 24 }}>
+          <div style={{ padding: 24 }}>
+            <h3 style={{ margin: "0 0 16px", color: COLORS.textPrimary }}>เพิ่มบทเรียนใหม่</h3>
+            <Input label="ชื่อบทเรียน" value={title} onChange={setTitle} placeholder="เช่น บทที่ 1 ความรู้เบื้องต้น" />
+            <Textarea label="คำอธิบาย" value={description} onChange={setDescription} placeholder="รายละเอียดบทเรียน..." rows={3} />
+            <Input label="ลิงก์วิดีโอ (YouTube)" value={videoUrl} onChange={setVideoUrl} placeholder="https://youtube.com/watch?v=..." />
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6, fontSize: 13 }}>ไฟล์เอกสารประกอบ (ไม่บังคับ)</label>
+              <button onClick={() => fileInputRef.current?.click()} style={{
+                width: "100%", padding: "12px", border: `1.5px dashed ${COLORS.glassBorderBright}`, borderRadius: 10,
+                background: COLORS.navyMid, color: COLORS.textSecondary, cursor: "pointer", fontFamily: "inherit", fontSize: 13,
+              }}>
+                {fileObj ? fileObj.name : "เลือกไฟล์ (PDF, DOCX, PPTX สูงสุด 10MB)"}
+              </button>
+              <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: "none" }} />
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <Button onClick={handleCreate} variant="saffron" disabled={saving}>{saving ? "กำลังบันทึก..." : "บันทึก"}</Button>
+              <Button onClick={() => setShowForm(false)} variant="ghost">ยกเลิก</Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+        {lessons.length === 0 ? (
+          <Card><div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>ยังไม่มีบทเรียน</div></Card>
+        ) : lessons.map(l => (
+          <Card key={l.id} style={{ cursor: "pointer" }} onClick={() => setSelected(l)}>
+            {l.videoUrl ? (
+              <div style={{ height: 140, background: COLORS.navyMid, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontSize: 13 }}>
+                วิดีโอบทเรียน
+              </div>
+            ) : (
+              <div style={{ height: 140, background: COLORS.glassMid, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontSize: 13 }}>
+                เอกสารบทเรียน
+              </div>
+            )}
+            <div style={{ padding: 16 }}>
+              <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 4 }}>{l.subject} · {l.author}</div>
+              <h3 style={{ margin: "0 0 6px", color: COLORS.textPrimary, fontSize: 15, fontWeight: 700 }}>{l.title}</h3>
+              <p style={{ margin: 0, color: COLORS.textSecondary, fontSize: 13, lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                {l.description}
+              </p>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── User Management (ผู้ใช้งาน — ครูจัดการรายชื่อ) ───────────────────────────
+function UserManagement({ profiles, loading }) {
+  const [search, setSearch] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+
+  const filtered = profiles.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase());
+    const matchRole = filterRole === "all" || p.role === filterRole;
+    return matchSearch && matchRole;
+  });
+
+  return (
+    <div>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}>ผู้ใช้งานในระบบ</h2>
+
+      <Card style={{ marginBottom: 20 }}>
+        <div style={{ padding: 18, display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาชื่อหรืออีเมล..."
+              style={{ width: "100%", boxSizing: "border-box", border: `1px solid ${COLORS.glassBorder}`, borderRadius: 10, padding: "10px 14px", fontSize: 14, fontFamily: "inherit", background: COLORS.navyMid, color: COLORS.textPrimary, outline: "none" }} />
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {[["all", "ทั้งหมด"], ["teacher", "ครู"], ["student", "นักเรียน"]].map(([val, label]) => (
+              <button key={val} onClick={() => setFilterRole(val)} style={{
+                padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
+                fontWeight: 600, fontSize: 13, fontFamily: "inherit",
+                background: filterRole === val ? COLORS.blue : COLORS.glassMid,
+                color: filterRole === val ? COLORS.white : COLORS.textSecondary,
+              }}>{label}</button>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div style={{ padding: 0 }}>
+          {loading ? (
+            <div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>กำลังโหลด...</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>ไม่พบผู้ใช้งาน</div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
+                <thead>
+                  <tr style={{ background: COLORS.navyMid }}>
+                    {["ชื่อ-นามสกุล", "บทบาท", "แผนก / วิชา", "อีเมล"].map(h => (
+                      <th key={h} style={{ textAlign: "left", padding: "12px 16px", color: COLORS.textSecondary, fontSize: 13, fontWeight: 700 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(p => (
+                    <tr key={p.id} style={{ borderBottom: `1px solid ${COLORS.glassBorder}` }}>
+                      <td style={{ padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: p.role === "teacher" ? G.amber : G.emerald,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontWeight: 700, color: COLORS.white, fontSize: 13, flexShrink: 0,
+                          }}>{p.name.charAt(0)}</div>
+                          <span style={{ color: COLORS.textPrimary, fontWeight: 600, fontSize: 14 }}>{p.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "14px 16px" }}><RoleBadge role={p.role} /></td>
+                      <td style={{ padding: "14px 16px", color: COLORS.textSecondary, fontSize: 13.5 }}>
+                        {p.role === "teacher" ? (p.subject || "-") : (p.department || "-")}
+                        {p.role === "student" && p.level ? ` · ${p.level}` : ""}
+                      </td>
+                      <td style={{ padding: "14px 16px", color: COLORS.textMuted, fontSize: 13 }}>{p.email}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ── Help Center (ศูนย์ช่วยเหลือ) ─────────────────────────────────────────────
+function HelpCenter({ user }) {
+  const [openIdx, setOpenIdx] = useState(null);
+
+  const faqsCommon = [
+    { q: "ลืมรหัสผ่านต้องทำอย่างไร?", a: "กรุณาติดต่อผู้ดูแลระบบหรือครูประจำวิชา เพื่อให้รีเซ็ตรหัสผ่านให้ใหม่ ระบบยังไม่มีฟังก์ชันลืมรหัสผ่านอัตโนมัติ" },
+    { q: "แก้ไขข้อมูลส่วนตัว เช่น ชื่อ แผนกวิชา ได้ที่ไหน?", a: "ไปที่เมนู \"ตั้งค่า\" ด้านซ้าย จะสามารถแก้ไขชื่อ นามสกุล แผนกวิชา และระดับชั้นได้" },
+    { q: "ข้อมูลที่บันทึกไว้จะหายไหมถ้าออกจากระบบ?", a: "ไม่หาย ข้อมูลทั้งหมดถูกบันทึกลงฐานข้อมูลถาวร เมื่อเข้าสู่ระบบใหม่จะเห็นข้อมูลเดิมครบถ้วน" },
+  ];
+
+  const faqsTeacher = [
+    { q: "สร้างแบบฝึกหัดใหม่อย่างไร?", a: "ไปที่เมนู \"แบบฝึกหัด\" แล้วกดปุ่ม \"สร้างแบบฝึกหัด\" กรอกชื่อ คำอธิบาย วันครบกำหนด และคำถาม-เฉลย จากนั้นกดบันทึก" },
+    { q: "ดูผลคะแนนของนักเรียนได้ที่ไหน?", a: "ไปที่เมนู \"ผลการทำแบบฝึกหัด\" เลือกแบบฝึกหัดที่ต้องการดู จะเห็นรายชื่อนักเรียนพร้อมคะแนนและสถานะ" },
+    { q: "ลบประกาศหรือแบบฝึกหัดที่โพสต์ผิดได้ไหม?", a: "ได้ เฉพาะประกาศหรือแบบฝึกหัดที่ท่านเป็นผู้สร้างเท่านั้น กดไอคอนถังขยะที่การ์ดนั้น ๆ" },
+  ];
+
+  const faqsStudent = [
+    { q: "ทำแบบฝึกหัดอย่างไร?", a: "ไปที่เมนู \"แบบฝึกหัด\" เลือกชิ้นที่ต้องการทำ กรอกคำตอบให้ครบทุกข้อ แล้วกดส่ง ระบบจะตรวจให้อัตโนมัติ" },
+    { q: "ดูคะแนนของตัวเองได้ที่ไหน?", a: "ไปที่เมนู \"คะแนนของฉัน\" จะเห็นประวัติคะแนนทุกแบบฝึกหัดที่เคยส่งไปแล้ว" },
+    { q: "โพสต์ประกาศได้ไหม?", a: "ได้ แต่ไม่สามารถแนบรูปภาพหรือปักหมุดประกาศได้ สิทธิ์เหล่านี้สงวนไว้สำหรับครูผู้สอนเท่านั้น" },
+  ];
+
+  const faqs = [...faqsCommon, ...(user.role === "teacher" ? faqsTeacher : faqsStudent)];
+
+  return (
+    <div style={{ maxWidth: 720 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 8px", letterSpacing:"-0.3px" }}>ศูนย์ช่วยเหลือ</h2>
+      <p style={{ color: COLORS.textSecondary, margin: "0 0 24px", fontSize: 14 }}>คำถามที่พบบ่อยและวิธีใช้งานระบบ</p>
+
+      {faqs.map((f, i) => (
+        <Card key={i} style={{ marginBottom: 10 }}>
+          <button onClick={() => setOpenIdx(openIdx === i ? null : i)} style={{
+            width: "100%", textAlign: "left", background: "none", border: "none",
+            padding: "16px 18px", cursor: "pointer", fontFamily: "inherit",
+            display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
+          }}>
+            <span style={{ color: COLORS.textPrimary, fontWeight: 600, fontSize: 14.5 }}>{f.q}</span>
+            <span style={{ color: COLORS.textMuted, fontSize: 18, transform: openIdx === i ? "rotate(45deg)" : "none", transition: "transform 0.2s" }}>+</span>
+          </button>
+          {openIdx === i && (
+            <div style={{ padding: "0 18px 18px", color: COLORS.textSecondary, fontSize: 14, lineHeight: 1.7 }}>
+              {f.a}
+            </div>
+          )}
+        </Card>
+      ))}
+
+      <Card style={{ marginTop: 20 }}>
+        <div style={{ padding: 20, textAlign: "center" }}>
+          <div style={{ color: COLORS.textPrimary, fontWeight: 700, marginBottom: 6, fontSize: 14.5 }}>ต้องการความช่วยเหลือเพิ่มเติม?</div>
+          <div style={{ color: COLORS.textSecondary, fontSize: 13.5 }}>ติดต่อผู้ดูแลระบบหรือครูประจำวิชาของท่าน</div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 // ── Main App ───────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null);
@@ -1656,19 +1950,23 @@ export default function App() {
   const [submissions, setSubmissions] = useState([]);
   const [likes, setLikes] = useState([]);
   const [comments, setComments] = useState([]);
+  const [lessons, setLessons] = useState([]);
+  const [profiles, setProfiles] = useState([]);
+  const [profilesLoading, setProfilesLoading] = useState(false);
   const [activeExercise, setActiveExercise] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // ── Load data from Supabase ──────────────────────────────────────────────
   const loadData = async () => {
     if (!supabase) return;
-    const [annRes, exRes, subRes, msgRes, likeRes, commentRes] = await Promise.all([
+    const [annRes, exRes, subRes, msgRes, likeRes, commentRes, lessonRes] = await Promise.all([
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
       supabase.from("exercises").select("*").order("created_at", { ascending: false }),
       supabase.from("submissions").select("*").order("created_at", { ascending: false }),
       supabase.from("messages").select("*").order("created_at", { ascending: true }),
       supabase.from("announcement_likes").select("*"),
       supabase.from("announcement_comments").select("*").order("created_at", { ascending: true }),
+      supabase.from("lessons").select("*").order("created_at", { ascending: false }),
     ]);
     if (annRes.data) setAnnouncements(annRes.data.map(dbToAnnouncement));
     if (exRes.data) setExercises(exRes.data.map(dbToExercise));
@@ -1676,7 +1974,25 @@ export default function App() {
     if (msgRes.data) setMessages(msgRes.data.map(dbToMessage));
     if (likeRes.data) setLikes(likeRes.data);
     if (commentRes.data) setComments(commentRes.data.map(dbToComment));
+    if (lessonRes.data) setLessons(lessonRes.data.map(dbToLesson));
   };
+
+  // ── โหลดรายชื่อผู้ใช้งานทั้งหมด (สำหรับครู) ───────────────────────────────
+  const loadProfiles = async () => {
+    if (!supabase) return;
+    setProfilesLoading(true);
+    const { data, error } = await supabase.from("profiles").select("*").order("role");
+    if (!error && data) {
+      setProfiles(data.map(p => ({
+        id: p.id,
+        name: `${p.first_name || ""} ${p.last_name || ""}`.trim() || "(ไม่มีชื่อ)",
+        role: p.role, subject: p.subject || "", department: p.department || "",
+        level: p.level || "", email: p.email || "",
+      })));
+    }
+    setProfilesLoading(false);
+  };
+
 
   // ── Auth session ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1684,14 +2000,20 @@ export default function App() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const profile = await loadUserProfile(session.user);
-        if (profile) { setUser(profile); await loadData(); }
+        if (profile) {
+          setUser(profile); await loadData();
+          if (profile.role === "teacher") await loadProfiles();
+        }
       }
       setAuthLoading(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         const profile = await loadUserProfile(session.user);
-        if (profile) { setUser(profile); await loadData(); }
+        if (profile) {
+          setUser(profile); await loadData();
+          if (profile.role === "teacher") await loadProfiles();
+        }
       } else if (event === "SIGNED_OUT") {
         setUser(null); setPage("dashboard"); setActiveExercise(null);
         setAnnouncements([]); setExercises([]); setSubmissions([]);
@@ -1739,6 +2061,34 @@ export default function App() {
     setAnnouncements(prev => prev.filter(a => a.id !== id));
     setLikes(prev => prev.filter(l => l.announcement_id !== id));
     setComments(prev => prev.filter(c => c.announcementId !== id));
+  };
+
+  // ── Lessons CRUD (เนื้อหาการเรียน) ───────────────────────────────────────────
+  const handleAddLesson = async (lesson) => {
+    if (!supabase) return;
+    let fileUrl = "", fileName = "";
+    if (lesson.file) {
+      const ext = lesson.file.name.split(".").pop();
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("lesson-files").upload(path, lesson.file, { upsert: false });
+      if (!upErr) {
+        const { data } = supabase.storage.from("lesson-files").getPublicUrl(path);
+        fileUrl = data?.publicUrl || "";
+        fileName = lesson.file.name;
+      }
+    }
+    const { data, error } = await supabase.from("lessons").insert([{
+      author_id: lesson.authorId, author_name: lesson.author,
+      title: lesson.title, subject: lesson.subject, description: lesson.description,
+      video_url: lesson.videoUrl, file_url: fileUrl, file_name: fileName,
+    }]).select().single();
+    if (!error && data) setLessons(prev => [dbToLesson(data), ...prev]);
+  };
+
+  const handleDeleteLesson = async (id) => {
+    if (!supabase) return;
+    await supabase.from("lessons").delete().eq("id", id);
+    setLessons(prev => prev.filter(l => l.id !== id));
   };
 
   // ── Likes ──────────────────────────────────────────────────────────────────
@@ -1845,7 +2195,10 @@ export default function App() {
     </div>
   );
 
-  if (!user) return <LoginScreen onLogin={async (u) => { setUser(u); setPage("dashboard"); await loadData(); }} />;
+  if (!user) return <LoginScreen onLogin={async (u) => {
+    setUser(u); setPage("dashboard"); await loadData();
+    if (u.role === "teacher") await loadProfiles();
+  }} />;
 
   const isTeacher = user.role === "teacher";
 
@@ -1899,6 +2252,13 @@ export default function App() {
             onSubmit={handleSubmitExercise}
             onBack={() => setActiveExercise(null)} />
         )}
+        {page === "lessons" && !activeExercise && (
+          <>
+            <BackButton onClick={() => setPage("dashboard")} />
+            <LearningContent user={user} lessons={lessons}
+              onAdd={handleAddLesson} onDelete={handleDeleteLesson} />
+          </>
+        )}
         {page === "results" && isTeacher && (
           <>
             <BackButton onClick={() => setPage("dashboard")} />
@@ -1910,6 +2270,18 @@ export default function App() {
           <>
             <BackButton onClick={() => setPage("dashboard")} />
             <MyScores user={user} submissions={submissions} exercises={exercises} />
+          </>
+        )}
+        {page === "users" && isTeacher && (
+          <>
+            <BackButton onClick={() => setPage("dashboard")} />
+            <UserManagement profiles={profiles} loading={profilesLoading} />
+          </>
+        )}
+        {page === "help" && !activeExercise && (
+          <>
+            <BackButton onClick={() => setPage("dashboard")} />
+            <HelpCenter user={user} />
           </>
         )}
         {page === "settings" && !activeExercise && (
