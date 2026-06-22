@@ -339,8 +339,8 @@ function LoginScreen({ onLogin }) {
               width: 42, height: 42, borderRadius: 12,
               background: "rgba(255,255,255,0.18)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 22,
-            }}>🏫</div>
+              fontSize: 19, fontWeight: 800, color: COLORS.white,
+            }}>E</div>
             <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.3px" }}>EduClass</span>
           </div>
 
@@ -398,7 +398,7 @@ function LoginScreen({ onLogin }) {
                   background: role === r ? COLORS.navy : "transparent",
                   color: role === r ? COLORS.white : COLORS.textSecondary,
                 }}>
-                {r === "student" ? "🎒 นักเรียน" : "📚 ครูผู้สอน"}
+                {r === "student" ? "นักเรียน" : "ครูผู้สอน"}
               </button>
             ))}
           </div>
@@ -408,7 +408,7 @@ function LoginScreen({ onLogin }) {
 
           {error && (
             <div style={{ background: COLORS.redLight, color: COLORS.red, borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, fontWeight: 600 }}>
-              ⚠️ {error}
+              {error}
             </div>
           )}
 
@@ -453,12 +453,12 @@ function LoginScreen({ onLogin }) {
 function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
   const isTeacher = user.role === "teacher";
   const nav = [
-    { id: "dashboard", icon: "🏠", label: "แดชบอร์ด" },
-    { id: "announcements", icon: "📢", label: "ประกาศ/ข่าวสาร" },
-    { id: "messages", icon: "💬", label: "ส่งข้อความ" },
-    { id: "exercises", icon: "✏️", label: "แบบฝึกหัด" },
-    ...(isTeacher ? [{ id: "results", icon: "📊", label: "ผลการทำแบบฝึกหัด" }] : [{ id: "myscores", icon: "⭐", label: "คะแนนของฉัน" }]),
-    { id: "settings", icon: "⚙️", label: "ตั้งค่า" },
+    { id: "dashboard", label: "แดชบอร์ด" },
+    { id: "announcements", label: "ประกาศ/ข่าวสาร" },
+    { id: "messages", label: "ส่งข้อความ" },
+    { id: "exercises", label: "แบบฝึกหัด" },
+    ...(isTeacher ? [{ id: "results", label: "ผลการทำแบบฝึกหัด" }] : [{ id: "myscores", label: "คะแนนของฉัน" }]),
+    { id: "settings", label: "ตั้งค่า" },
   ];
 
   return (
@@ -485,8 +485,8 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
               width: 38, height: 38, borderRadius: 10,
               background: COLORS.blue,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18, flexShrink:0,
-            }}>🏫</div>
+              fontSize: 17, fontWeight: 800, color: COLORS.white, flexShrink:0,
+            }}>E</div>
             <div>
               <div style={{ fontWeight: 800, color: COLORS.textPrimary, fontSize: 17 }}>EduClass</div>
               <div style={{ fontSize:11, color: COLORS.textMuted }}>ระบบจัดการการเรียนการสอน</div>
@@ -524,9 +524,10 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
             return (
               <button key={n.id} onClick={() => { setPage(n.id); setMobileOpen(false); }}
                 style={{
-                  display: "flex", alignItems: "center", gap: 12,
+                  display: "flex", alignItems: "center",
                   width: "100%", padding: "10px 14px", borderRadius: 8,
                   border: "none",
+                  borderLeft: active ? `3px solid ${COLORS.blue}` : "3px solid transparent",
                   cursor: "pointer", fontFamily: "inherit",
                   fontWeight: active ? 700 : 500, fontSize: 13.5,
                   marginBottom: 2,
@@ -534,7 +535,6 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
                   color: active ? COLORS.blue : COLORS.textSecondary,
                   textAlign: "left", transition: "background 0.15s ease",
                 }}>
-                <span style={{ fontSize: 16 }}>{n.icon}</span>
                 {n.label}
               </button>
             );
@@ -553,7 +553,7 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
           }}
           onMouseEnter={e => { e.target.style.background=COLORS.redLight; }}
           onMouseLeave={e => { e.target.style.background=COLORS.white; }}>
-            🚪 ออกจากระบบ
+            ออกจากระบบ
           </button>
         </div>
       </aside>
@@ -602,20 +602,20 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
 
   const stats = isTeacher
     ? [
-        { label: "แบบฝึกหัดที่มอบหมาย", value: exercises.filter(e => e.authorId === user.id).length, icon: "📝", color: COLORS.saffron },
-        { label: "ส่งงานแล้ว", value: teacherSubmissions.length, icon: "✅", color: COLORS.jade },
-        { label: "ประกาศทั้งหมด", value: announcements.filter(a => a.authorId === user.id).length, icon: "📢", color: COLORS.navyLight },
+        { label: "แบบฝึกหัดที่มอบหมาย", value: exercises.filter(e => e.authorId === user.id).length, color: COLORS.saffron },
+        { label: "ส่งงานแล้ว", value: teacherSubmissions.length, color: COLORS.jade },
+        { label: "ประกาศทั้งหมด", value: announcements.filter(a => a.authorId === user.id).length, color: COLORS.navyLight },
       ]
     : [
-        { label: "แบบฝึกหัดทั้งหมด", value: totalExercises, icon: "📝", color: COLORS.textPrimary },
-        { label: "ส่งแล้ว", value: doneCount, icon: "✅", color: COLORS.jade },
-        { label: "คะแนนเฉลี่ย", value: avgScore + "%", icon: "⭐", color: COLORS.saffron },
+        { label: "แบบฝึกหัดทั้งหมด", value: totalExercises, color: COLORS.textPrimary },
+        { label: "ส่งแล้ว", value: doneCount, color: COLORS.jade },
+        { label: "คะแนนเฉลี่ย", value: avgScore + "%", color: COLORS.saffron },
       ];
 
   return (
     <div>
       <h2 style={{ fontSize: 26, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 6px", letterSpacing:"-0.5px" }}>
-        สวัสดี, {user.name} 👋
+        สวัสดี, {user.name}
       </h2>
       <p style={{ color: COLORS.textSecondary, margin: "0 0 28px", fontSize: 15 }}>
         {isTeacher ? `วิชา: ${user.subject}` : `ห้อง: ${user.class}`}
@@ -626,7 +626,6 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
         {stats.map((s, i) => (
           <Card key={i} accent={s.color}>
             <div style={{ padding: 20 }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>{s.icon}</div>
               <div style={{ fontSize: 30, fontWeight: 800, color: COLORS.textPrimary, fontFamily: "monospace", letterSpacing:"-1px" }}>{s.value}</div>
               <div style={{ color: COLORS.textSecondary, fontSize: 13, marginTop: 4 }}>{s.label}</div>
             </div>
@@ -639,7 +638,7 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
         <Card accent={COLORS.jade}>
           <div style={{ padding: 20 }}>
             <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 14, fontSize: 15, display: "flex", justifyContent: "space-between" }}>
-              📢 ประกาศล่าสุด
+              ประกาศล่าสุด
               <button onClick={() => setPage("announcements")} style={{ background: "none", border: "none", color: COLORS.jade, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>ดูทั้งหมด →</button>
             </div>
             {announcements.slice(0, 3).map(a => (
@@ -660,7 +659,7 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
         <Card accent={COLORS.saffron}>
           <div style={{ padding: 20 }}>
             <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 14, fontSize: 15, display: "flex", justifyContent: "space-between" }}>
-              ✏️ แบบฝึกหัดที่ยังไม่ส่ง
+              แบบฝึกหัดที่ยังไม่ส่ง
               <button onClick={() => setPage("exercises")} style={{ background: "none", border: "none", color: COLORS.saffron, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>ดูทั้งหมด →</button>
             </div>
             {exercises.filter(e => !mySubmissions.find(s => s.exerciseId === e.id)).slice(0, 3).map(e => (
@@ -669,11 +668,10 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
                   <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary }}>{e.title}</div>
                   <div style={{ fontSize: 12, color: COLORS.textSecondary }}>ครบกำหนด: {e.dueDate}</div>
                 </div>
-                <span style={{ fontSize: 18 }}>📌</span>
               </div>
             ))}
             {exercises.filter(e => !mySubmissions.find(s => s.exerciseId === e.id)).length === 0 && (
-              <div style={{ color: COLORS.green, fontWeight: 600, fontSize: 14 }}>✅ ส่งงานครบทุกชิ้นแล้ว!</div>
+              <div style={{ color: COLORS.green, fontWeight: 600, fontSize: 14 }}> ส่งงานครบทุกชิ้นแล้ว!</div>
             )}
           </div>
         </Card>
@@ -788,7 +786,7 @@ function PostComposer({ user, onAdd }) {
                     width: 32, height: 32, borderRadius: "50%",
                     background: "rgba(0,0,0,0.6)", border: "none", color: COLORS.white,
                     cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>✕</button>
+                  }}>×</button>
                 </div>
               ) : (
                 <button onClick={() => fileInputRef.current?.click()} style={{
@@ -798,31 +796,31 @@ function PostComposer({ user, onAdd }) {
                   background: "rgba(56,189,248,0.04)", color: COLORS.cyan,
                   cursor: "pointer", fontFamily: "inherit", fontWeight: 600, fontSize: 13,
                 }}>
-                  🖼️ เพิ่มรูปภาพ
+                  เพิ่มรูปภาพ
                 </button>
               )
             )}
             {isTeacher && <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} style={{ display: "none" }} />}
             {!isTeacher && (
               <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 16 }}>
-                ℹ️ นักเรียนสามารถโพสต์ประกาศได้ แต่ไม่สามารถแนบรูปภาพ
+                ℹ นักเรียนสามารถโพสต์ประกาศได้ แต่ไม่สามารถแนบรูปภาพ
               </div>
             )}
 
             {isTeacher && (
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <input type="checkbox" id="pin" checked={pinned} onChange={e => setPinned(e.target.checked)} />
-                <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.textPrimary, cursor: "pointer", fontSize: 13 }}>📌 ปักหมุดประกาศนี้</label>
+                <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.textPrimary, cursor: "pointer", fontSize: 13 }}>ปักหมุดประกาศนี้</label>
               </div>
             )}
 
             {uploadProgress && (
-              <div style={{ fontSize: 13, color: COLORS.cyan, marginBottom: 12 }}>⏳ {uploadProgress}</div>
+              <div style={{ fontSize: 13, color: COLORS.cyan, marginBottom: 12 }}>{uploadProgress}</div>
             )}
 
             <div style={{ display: "flex", gap: 10 }}>
               <Button onClick={handlePost} variant={isTeacher ? "saffron" : "jade"} disabled={saving} style={{ flex: 1, justifyContent: "center" }}>
-                {saving ? "กำลังโพสต์..." : "📤 โพสต์"}
+                {saving ? "กำลังโพสต์..." : "โพสต์"}
               </Button>
               <Button onClick={() => { setShowForm(false); removeImage(); }} variant="ghost">ยกเลิก</Button>
             </div>
@@ -911,7 +909,7 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
   return (
     <div style={{ maxWidth: 680, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>📰 ฟีดข่าวสาร</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>ฟีดข่าวสาร</h2>
       </div>
 
       <PostComposer user={user} onAdd={onAdd} />
@@ -939,11 +937,11 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
                 <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 }}>{a.author}</div>
                 <div style={{ fontSize: 12, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
                   {a.date}
-                  {a.pinned && <span style={{ color: COLORS.amber, fontWeight: 700 }}>· 📌 ปักหมุด</span>}
+                  {a.pinned && <span style={{ color: COLORS.amber, fontWeight: 700 }}>· ปักหมุด</span>}
                 </div>
               </div>
               {(a.authorId === user.id || isTeacher) && (
-                <Button onClick={() => handleDelete(a.id)} variant="danger" size="sm">🗑</Button>
+                <Button onClick={() => handleDelete(a.id)} variant="danger" size="sm"></Button>
               )}
             </div>
 
@@ -965,7 +963,7 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
             {/* Like / comment counts */}
             {(postLikes.length > 0 || postComments.length > 0) && (
               <div style={{ padding: "10px 18px 0", display: "flex", justifyContent: "space-between", fontSize: 12.5, color: COLORS.textMuted }}>
-                <span>{postLikes.length > 0 && `👍 ${postLikes.length} คนถูกใจ`}</span>
+                <span>{postLikes.length > 0 && ` ${postLikes.length} คนถูกใจ`}</span>
                 <span>{postComments.length > 0 && `${postComments.length} ความเห็น`}</span>
               </div>
             )}
@@ -983,7 +981,7 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
                 color: iLiked ? COLORS.cyan : COLORS.textMuted,
                 transition: "all 0.15s ease",
               }}>
-                {iLiked ? "💙 ถูกใจแล้ว" : "👍 ถูกใจ"}
+                {iLiked ? "ถูกใจแล้ว" : "ถูกใจ"}
               </button>
               <button onClick={() => toggleComments(a.id)} style={{
                 flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
@@ -991,7 +989,7 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
                 padding: "8px 0", borderRadius: 10,
                 fontSize: 13, fontWeight: 700, color: COLORS.textMuted,
               }}>
-                💬 แสดงความเห็น
+                แสดงความเห็น
               </button>
             </div>
 
@@ -1028,7 +1026,7 @@ function Messages({ user, messages, onSend }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}>💬 ส่งข้อความ</h2>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}> ส่งข้อความ</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         {/* Message list */}
         <Card accent={COLORS.jade} style={{ marginBottom: 20 }}>
@@ -1067,13 +1065,13 @@ function Messages({ user, messages, onSend }) {
                   fontWeight: 600, fontSize: 13, fontFamily: "inherit",
                   background: toAll ? COLORS.saffron : COLORS.slateLight,
                   color: toAll ? COLORS.navy : COLORS.slate,
-                }}>📣 ส่งถึงทุกคน</button>
+                }}>ส่งถึงทุกคน</button>
                 <button onClick={() => setToAll(false)} style={{
                   padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer",
                   fontWeight: 600, fontSize: 13, fontFamily: "inherit",
                   background: !toAll ? COLORS.saffron : COLORS.slateLight,
                   color: !toAll ? COLORS.navy : COLORS.slate,
-                }}>👤 ส่งถึงนักเรียนคนเดิม</button>
+                }}>ส่งถึงนักเรียนคนเดิม</button>
               </div>
             )}
             {!toAll && <Input value={target} onChange={setTarget} placeholder="ชื่อนักเรียน..." />}
@@ -1086,7 +1084,7 @@ function Messages({ user, messages, onSend }) {
                   padding: "10px 14px", fontSize: 15, fontFamily: "inherit",
                   background: COLORS.navyMid, color: COLORS.textPrimary, outline: "none",
                 }} />
-              <Button onClick={handleSend} variant="jade" disabled={sending}>{sending ? "..." : "ส่ง ➤"}</Button>
+              <Button onClick={handleSend} variant="jade" disabled={sending}>{sending ? "..." : "ส่ง "}</Button>
             </div>
           </div>
         </Card>
@@ -1122,14 +1120,14 @@ function ExerciseList({ user, exercises, onAdd, onDelete, submissions, onOpenExe
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>✏️ แบบฝึกหัด</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}> แบบฝึกหัด</h2>
         {isTeacher && <Button onClick={() => setShowForm(!showForm)} variant="saffron">+ สร้างแบบฝึกหัด</Button>}
       </div>
 
       {isTeacher && showForm && (
         <Card accent={COLORS.saffron} style={{ marginBottom: 24 }}>
           <div style={{ padding: 24 }}>
-            <h3 style={{ margin: "0 0 16px", color: COLORS.textPrimary }}>📝 สร้างแบบฝึกหัดใหม่</h3>
+            <h3 style={{ margin: "0 0 16px", color: COLORS.textPrimary }}>สร้างแบบฝึกหัดใหม่</h3>
             <Input label="ชื่อแบบฝึกหัด" value={title} onChange={setTitle} placeholder="เช่น แบบฝึกหัดคณิตศาสตร์ บทที่ 1" />
             <Textarea label="คำอธิบาย" value={description} onChange={setDescription} placeholder="รายละเอียดแบบฝึกหัด..." rows={2} />
             <Input label="วันครบกำหนด" value={dueDate} onChange={setDueDate} placeholder="เช่น 25 มิ.ย. 2568" />
@@ -1162,16 +1160,16 @@ function ExerciseList({ user, exercises, onAdd, onDelete, submissions, onOpenExe
                 <h3 style={{ margin: "0 0 8px", color: COLORS.textPrimary, fontSize: 16 }}>{ex.title}</h3>
                 <p style={{ margin: "0 0 12px", color: COLORS.textSecondary, fontSize: 14 }}>{ex.description}</p>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: COLORS.textSecondary }}>📅 {ex.dueDate}</span>
+                  <span style={{ fontSize: 13, color: COLORS.textSecondary }}> {ex.dueDate}</span>
                   {mySubmit
-                    ? <span style={{ background: COLORS.greenLight, color: COLORS.green, fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>✅ {mySubmit.percentage}%</span>
+                    ? <span style={{ background: COLORS.greenLight, color: COLORS.green, fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}> {mySubmit.percentage}%</span>
                     : <span style={{ background: COLORS.saffronLight, color: COLORS.amber, fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>ยังไม่ส่ง</span>}
                 </div>
                 {!isTeacher && !mySubmit && (
                   <Button onClick={e => { e.stopPropagation(); onOpenExercise(ex); }} variant="saffron" size="sm" style={{ marginTop: 12, width: "100%", justifyContent: "center" }}>ทำแบบฝึกหัด →</Button>
                 )}
                 {isTeacher && ex.authorId === user.id && (
-                  <Button onClick={e => { e.stopPropagation(); if(window.confirm("ลบแบบฝึกหัดนี้?")) onDelete(ex.id); }} variant="danger" size="sm" style={{ marginTop: 12, width: "100%", justifyContent: "center" }}>🗑 ลบแบบฝึกหัด</Button>
+                  <Button onClick={e => { e.stopPropagation(); if(window.confirm("ลบแบบฝึกหัดนี้?")) onDelete(ex.id); }} variant="danger" size="sm" style={{ marginTop: 12, width: "100%", justifyContent: "center" }}> ลบแบบฝึกหัด</Button>
                 )}
               </div>
             </Card>
@@ -1229,7 +1227,7 @@ ${exercise.questions.map((q, i) => `
         <Button onClick={onBack} variant="ghost" size="sm" style={{ marginBottom: 20 }}>← กลับ</Button>
         <Card accent={result.percentage >= 70 ? COLORS.green : COLORS.red}>
           <div style={{ padding: 28, textAlign: "center" }}>
-            <div style={{ fontSize: 64 }}>{result.percentage >= 80 ? "🌟" : result.percentage >= 60 ? "😊" : "💪"}</div>
+            <div style={{ fontSize: 64 }}>{result.percentage >= 80 ? "" : result.percentage >= 60 ? "" : ""}</div>
             <h2 style={{ color: COLORS.textPrimary, fontSize: 28, margin: "12px 0 4px" }}>คะแนนของคุณ</h2>
             <div style={{ fontSize: 56, fontWeight: 900, color: result.percentage >= 70 ? COLORS.green : COLORS.red, fontFamily: "monospace" }}>
               {result.percentage}%
@@ -1248,7 +1246,7 @@ ${exercise.questions.map((q, i) => `
               <Card key={i} accent={r.correct ? COLORS.green : COLORS.red} style={{ marginBottom: 12 }}>
                 <div style={{ padding: 16 }}>
                   <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 20 }}>{r.correct ? "✅" : "❌"}</span>
+                    <span style={{ fontSize: 20 }}>{r.correct ? "" : ""}</span>
                     <div>
                       <div style={{ fontWeight: 600, color: COLORS.textPrimary, marginBottom: 4 }}>ข้อ {i + 1}: {q.text}</div>
                       <div style={{ fontSize: 14, color: COLORS.textSecondary }}>คำตอบของคุณ: <strong>{answers["q" + i] || "(ไม่ได้ตอบ)"}</strong></div>
@@ -1271,7 +1269,7 @@ ${exercise.questions.map((q, i) => `
       <Card accent={COLORS.saffron} style={{ marginBottom: 20 }}>
         <div style={{ padding: 24 }}>
           <h2 style={{ color: COLORS.textPrimary, margin: "0 0 6px" }}>{exercise.title}</h2>
-          <div style={{ color: COLORS.textSecondary, fontSize: 14 }}>👨‍🏫 {exercise.author} · 📅 ครบกำหนด {exercise.dueDate}</div>
+          <div style={{ color: COLORS.textSecondary, fontSize: 14 }}>{exercise.author} · ครบกำหนด {exercise.dueDate}</div>
           {exercise.description && <p style={{ margin: "10px 0 0", color: COLORS.textPrimary }}>{exercise.description}</p>}
         </div>
       </Card>
@@ -1280,7 +1278,7 @@ ${exercise.questions.map((q, i) => `
         <Card key={i} style={{ marginBottom: 16 }}>
           <div style={{ padding: 20 }}>
             <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 12 }}>ข้อ {i + 1}. {q.text}</div>
-            {q.hint && <div style={{ fontSize: 13, color: COLORS.jade, marginBottom: 10 }}>💡 คำใบ้: {q.hint}</div>}
+            {q.hint && <div style={{ fontSize: 13, color: COLORS.jade, marginBottom: 10 }}>คำใบ้: {q.hint}</div>}
             <input
               value={answers["q" + i] || ""}
               onChange={e => setAnswers({ ...answers, ["q" + i]: e.target.value })}
@@ -1298,7 +1296,7 @@ ${exercise.questions.map((q, i) => `
       ))}
 
       <Button onClick={handleSubmit} disabled={loading} variant="jade" style={{ width: "100%", justifyContent: "center", fontSize: 16, padding: "14px 0" }}>
-        {loading ? "⏳ กำลังตรวจคำตอบด้วย AI..." : "📤 ส่งแบบฝึกหัด"}
+        {loading ? "กำลังตรวจคำตอบด้วย AI..." : "ส่งแบบฝึกหัด"}
       </Button>
     </div>
   );
@@ -1323,17 +1321,17 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
     : 0;
 
   const stats = [
-    { label: "แบบฝึกหัดของฉัน", value: myExercises.length, icon: "📝", color: COLORS.saffron },
-    { label: "ผู้ส่งทั้งหมด", value: teacherSubmissions.length, icon: "✅", color: COLORS.jade },
-    { label: "คะแนนเฉลี่ย", value: `${averageScore}%`, icon: "📈", color: COLORS.navyLight },
-    { label: "คะแนนสูงสุด", value: `${highestScore}%`, icon: "🏆", color: COLORS.green },
+    { label: "แบบฝึกหัดของฉัน", value: myExercises.length, color: COLORS.saffron },
+    { label: "ผู้ส่งทั้งหมด", value: teacherSubmissions.length, color: COLORS.jade },
+    { label: "คะแนนเฉลี่ย", value: `${averageScore}%`, color: COLORS.navyLight },
+    { label: "คะแนนสูงสุด", value: `${highestScore}%`, color: COLORS.green },
   ];
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>📊 แดชบอร์ดคะแนนแบบฝึกหัด</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>แดชบอร์ดคะแนนแบบฝึกหัด</h2>
           <p style={{ color: COLORS.textSecondary, margin: "6px 0 0", fontSize: 14 }}>
             รวบรวมผลการทำแบบฝึกหัดและรายชื่อนักเรียนที่ส่งงานแล้ว
           </p>
@@ -1344,9 +1342,8 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
         {stats.map(stat => (
           <Card key={stat.label} accent={stat.color}>
             <div style={{ padding: 18 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div style={{ marginBottom: 10 }}>
                 <span style={{ color: COLORS.textSecondary, fontSize: 13, fontWeight: 700 }}>{stat.label}</span>
-                <span style={{ fontSize: 22 }}>{stat.icon}</span>
               </div>
               <div style={{ color: COLORS.textPrimary, fontSize: 28, fontWeight: 900, fontFamily: "monospace" }}>{stat.value}</div>
             </div>
@@ -1475,7 +1472,7 @@ function MyScores({ user, submissions, exercises }) {
   const mySubmissions = submissions.filter(s => s.studentId === user.id);
   return (
     <div>
-      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}>⭐ คะแนนของฉัน</h2>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}> คะแนนของฉัน</h2>
       {mySubmissions.length === 0 ? (
         <Card><div style={{ padding: 40, textAlign: "center", color: COLORS.textSecondary }}>ยังไม่มีการส่งแบบฝึกหัด</div></Card>
       ) : (
@@ -1487,7 +1484,7 @@ function MyScores({ user, submissions, exercises }) {
                 <div>
                   <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 16 }}>{ex?.title || "แบบฝึกหัด"}</div>
                   <div style={{ fontSize: 13, color: COLORS.textSecondary }}>{ex?.subject} · ส่ง: {s.date}</div>
-                  {s.comment && <div style={{ fontSize: 13, color: COLORS.jade, marginTop: 6, fontStyle: "italic" }}>💬 {s.comment}</div>}
+                  {s.comment && <div style={{ fontSize: 13, color: COLORS.jade, marginTop: 6, fontStyle: "italic" }}> {s.comment}</div>}
                 </div>
                 <div style={{ textAlign: "center" }}>
                   <div style={{
@@ -1574,7 +1571,7 @@ function Settings({ user, onSave }) {
   return (
     <div>
       <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}>
-        ⚙️ ตั้งค่าข้อมูลส่วนตัว
+        ตั้งค่าข้อมูลส่วนตัว
       </h2>
 
       <div className="grid-sidebar-settings" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 280px", gap: 20 }}>
@@ -1607,17 +1604,17 @@ function Settings({ user, onSave }) {
 
             {saved && (
               <div style={{ background: COLORS.greenLight, color: COLORS.green, borderRadius: 10, padding: "10px 14px", marginBottom: 16, fontWeight: 700 }}>
-                ✅ บันทึกข้อมูลเรียบร้อยแล้ว
+                บันทึกข้อมูลเรียบร้อยแล้ว
               </div>
             )}
             {error && (
               <div style={{ background: COLORS.redLight, color: COLORS.red, borderRadius: 10, padding: "10px 14px", marginBottom: 16, fontWeight: 700 }}>
-                ⚠️ {error}
+                {error}
               </div>
             )}
 
             <Button onClick={handleSave} disabled={saving} variant={isTeacher ? "saffron" : "jade"}>
-              {saving ? "กำลังบันทึก..." : "💾 บันทึกการแก้ไข"}
+              {saving ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
             </Button>
           </div>
         </Card>
@@ -1640,7 +1637,6 @@ function Settings({ user, onSave }) {
             <div style={{ marginTop: 18, color: COLORS.textSecondary, fontSize: 14, lineHeight: 1.8 }}>
               <div><strong style={{ color: COLORS.textPrimary }}>แผนก:</strong> {department || "-"}</div>
               {!isTeacher && <div><strong style={{ color: COLORS.textPrimary }}>ระดับชั้น:</strong> {level || "-"}</div>}
-              {isTeacher && <div><strong style={{ color: COLORS.textPrimary }}>วิชา:</strong> {user.subject || "-"}</div>}
             </div>
           </div>
         </Card>
@@ -1827,8 +1823,8 @@ export default function App() {
         width: 64, height: 64, borderRadius: 16,
         background: COLORS.blue,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 30,
-      }}>🏫</div>
+        fontSize: 28, fontWeight: 800, color: COLORS.white,
+      }}>E</div>
       <div style={{ color: COLORS.textPrimary, fontSize: 16, fontWeight: 600 }}>กำลังโหลด...</div>
       <div style={{ display:"flex", gap:6 }}>
         {[0,1,2].map(i => (
@@ -1868,7 +1864,7 @@ export default function App() {
           background: COLORS.navy, border: "none", borderRadius: 10, padding: "8px 14px",
           color: COLORS.white, cursor: "pointer", fontSize: 20,
           boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-        }}>☰</button>
+        }}>≡</button>
 
         {page === "dashboard" && !activeExercise && (
           <Dashboard user={user} announcements={announcements} exercises={exercises}
