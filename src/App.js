@@ -469,7 +469,7 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 90,
         }} />
       )}
-      <aside style={{
+      <aside className={`app-sidebar${mobileOpen ? " mobile-open" : ""}`} style={{
         width: 250,
         background: COLORS.white,
         display: "flex", flexDirection: "column",
@@ -634,7 +634,7 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         {/* Latest announcements */}
         <Card accent={COLORS.jade}>
           <div style={{ padding: 20 }}>
@@ -781,8 +781,8 @@ function PostComposer({ user, onAdd }) {
             {/* Image upload — teachers only */}
             {isTeacher && (
               imagePreview ? (
-                <div style={{ position: "relative", marginBottom: 16, borderRadius: 14, overflow: "hidden" }}>
-                  <img src={imagePreview} alt="preview" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
+                <div style={{ position: "relative", marginBottom: 16, borderRadius: 14, overflow: "hidden", background: COLORS.glassMid, maxHeight: 400 }}>
+                  <img src={imagePreview} alt="preview" style={{ width: "100%", maxHeight: 400, objectFit: "contain", display: "block", margin: "0 auto" }} />
                   <button onClick={removeImage} style={{
                     position: "absolute", top: 10, right: 10,
                     width: 32, height: 32, borderRadius: "50%",
@@ -953,11 +953,13 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
               <p style={{ margin: 0, color: COLORS.textSecondary, lineHeight: 1.7, fontSize: 14.5, whiteSpace: "pre-wrap" }}>{a.body}</p>
             </div>
 
-            {/* Post image */}
+            {/* Post image — แสดงสัดส่วนจริงตามภาพที่อัปโหลด */}
             {a.imageUrl && (
-              <img src={a.imageUrl} alt={a.subject} style={{
-                width: "100%", maxHeight: 480, objectFit: "cover", display: "block",
-              }} />
+              <div style={{ background: COLORS.glassMid, maxHeight: 560, overflow: "hidden", display: "flex", justifyContent: "center" }}>
+                <img src={a.imageUrl} alt={a.subject} style={{
+                  width: "100%", maxHeight: 560, objectFit: "contain", display: "block",
+                }} />
+              </div>
             )}
 
             {/* Like / comment counts */}
@@ -1133,7 +1135,7 @@ function ExerciseList({ user, exercises, onAdd, onDelete, submissions, onOpenExe
             <Input label="วันครบกำหนด" value={dueDate} onChange={setDueDate} placeholder="เช่น 25 มิ.ย. 2568" />
             <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 12 }}>คำถาม (กรอกคำถามและเฉลย)</div>
             {[0, 1, 2].map(i => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+              <div key={i} className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                 <input value={qTexts[i]} onChange={e => { const a = [...qTexts]; a[i] = e.target.value; setQTexts(a); }}
                   placeholder={`คำถามที่ ${i + 1}`} style={{ border: `1.5px solid ${COLORS.glassBorder}`, borderRadius: 8, padding: "8px 12px", fontSize: 14, fontFamily: "inherit", background: COLORS.navyMid, color: COLORS.textPrimary, outline: "none" }} />
                 <input value={qAnswers[i]} onChange={e => { const a = [...qAnswers]; a[i] = e.target.value; setQAnswers(a); }}
@@ -1338,7 +1340,7 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14, marginBottom: 20 }}>
+      <div className="grid-4col" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14, marginBottom: 20 }}>
         {stats.map(stat => (
           <Card key={stat.label} accent={stat.color}>
             <div style={{ padding: 18 }}>
@@ -1352,7 +1354,7 @@ function Results({ user, exercises, submissions, onDeleteSubmission, onDeleteExe
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 20 }}>
+      <div className="grid-sidebar-results" style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 20 }}>
         <Card>
           <div style={{ padding: 18 }}>
             <h3 style={{ color: COLORS.textPrimary, margin: "0 0 14px", fontSize: 16 }}>รายการแบบฝึกหัด</h3>
@@ -1575,14 +1577,14 @@ function Settings({ user, onSave }) {
         ⚙️ ตั้งค่าข้อมูลส่วนตัว
       </h2>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 280px", gap: 20 }}>
+      <div className="grid-sidebar-settings" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 280px", gap: 20 }}>
         <Card accent={isTeacher ? COLORS.saffron : COLORS.jade}>
           <div style={{ padding: 24 }}>
             <h3 style={{ color: COLORS.textPrimary, margin: "0 0 18px", fontSize: 18 }}>
               {isTeacher ? "ข้อมูลครู" : "ข้อมูลนักเรียนนักศึกษา"}
             </h3>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               <Input label="ชื่อ" value={firstName} onChange={setFirstName} placeholder="ชื่อ" />
               <Input label="นามสกุล" value={lastName} onChange={setLastName} placeholder="นามสกุล" />
             </div>
@@ -1861,7 +1863,7 @@ export default function App() {
       <main style={{ marginLeft: 260, flex: 1, padding: "36px 32px", minHeight: "100vh", position:"relative" }}>
         <div>
         {/* Mobile hamburger */}
-        <button onClick={() => setMobileOpen(true)} style={{
+        <button className="mobile-hamburger" onClick={() => setMobileOpen(true)} style={{
           display: "none", position: "fixed", top: 16, left: 16, zIndex: 80,
           background: COLORS.navy, border: "none", borderRadius: 10, padding: "8px 14px",
           color: COLORS.white, cursor: "pointer", fontSize: 20,
@@ -1933,9 +1935,30 @@ export default function App() {
         ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
         input::placeholder, textarea::placeholder { color: #94A3B8; }
 
+        /* ── Mobile responsive ── */
         @media (max-width: 700px) {
-          main { margin-left: 0 !important; padding: 20px 14px !important; }
-          button[aria-label="menu"] { display: flex !important; }
+          main { margin-left: 0 !important; padding: 72px 14px 24px !important; }
+          .mobile-hamburger { display: flex !important; }
+          .app-sidebar { transform: translateX(-100%); }
+          .app-sidebar.mobile-open { transform: translateX(0) !important; }
+
+          /* Stack 2-column grids into 1 column on mobile */
+          .grid-2col { grid-template-columns: 1fr !important; }
+          .grid-4col { grid-template-columns: repeat(2, 1fr) !important; }
+          .grid-sidebar-results { grid-template-columns: 1fr !important; }
+          .grid-sidebar-settings { grid-template-columns: 1fr !important; }
+
+          /* Reduce heading sizes slightly */
+          h1 { font-size: 22px !important; }
+          h2 { font-size: 19px !important; }
+
+          /* Tables scroll horizontally instead of breaking layout */
+          table { min-width: 560px !important; }
+        }
+
+        @media (max-width: 480px) {
+          .grid-4col { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+          main { padding: 64px 10px 20px !important; }
         }
       `}</style>
     </div>
