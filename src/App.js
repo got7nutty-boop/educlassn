@@ -1918,8 +1918,8 @@ function UserManagement({ profiles, loading, onCreateStudent }) {
               {filtered.map(p => {
                 const isTeacherRow = p.role === "teacher";
                 const detailLine = isTeacherRow
-                  ? [p.subject ? `วิชา${p.subject}` : null, p.department || null].filter(Boolean).join(" · ")
-                  : [p.level || null, p.department ? `แผนก${p.department}` : null].filter(Boolean).join(" ");
+                  ? (p.department || "-")
+                  : [p.level || null, p.department || null].filter(Boolean).join(" ");
 
                 return (
                   <div key={p.id} style={{
