@@ -1801,9 +1801,20 @@ function LearningContent({ user, lessons, onAdd, onDelete }) {
 }
 
 // ── User Management (ผู้ใช้งาน — ครูจัดการรายชื่อ) ───────────────────────────
-function UserManagement({ profiles, loading }) {
+function UserManagement({ profiles, loading, onCreateStudent }) {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all");
+  const [showForm, setShowForm] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [department, setDepartment] = useState("");
+  const [level, setLevel] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
 
   const filtered = profiles.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase());
@@ -1811,9 +1822,71 @@ function UserManagement({ profiles, loading }) {
     return matchSearch && matchRole;
   });
 
+  const resetForm = () => {
+    setEmail(""); setPassword(""); setFirstName(""); setLastName("");
+    setDepartment(""); setLevel(""); setFormError(""); setFormSuccess("");
+  };
+
+  const handleCreate = async () => {
+    setFormError(""); setFormSuccess("");
+    if (!email.trim() || !password.trim()) { setFormError("กรุณากรอกอีเมลและรหัสผ่าน"); return; }
+    if (password.length < 6) { setFormError("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"); return; }
+
+    setCreating(true);
+    const result = await onCreateStudent({ email: email.trim(), password, firstName, lastName, department, level });
+    setCreating(false);
+
+    if (result?.error) {
+      setFormError(result.error);
+    } else {
+      setFormSuccess(`สร้างบัญชีนักเรียน ${email} สำเร็จแล้ว`);
+      setEmail(""); setPassword(""); setFirstName(""); setLastName(""); setDepartment(""); setLevel("");
+    }
+  };
+
   return (
     <div>
-      <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 20px", letterSpacing:"-0.3px" }}>ผู้ใช้งานในระบบ</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: COLORS.textPrimary, margin: 0, letterSpacing:"-0.3px" }}>ผู้ใช้งานในระบบ</h2>
+        <Button onClick={() => { setShowForm(!showForm); resetForm(); }} variant="saffron">เพิ่มบัญชีนักเรียน</Button>
+      </div>
+
+      {showForm && (
+        <Card accent={COLORS.saffron} style={{ marginBottom: 20 }}>
+          <div style={{ padding: 24 }}>
+            <h3 style={{ margin: "0 0 16px", color: COLORS.textPrimary }}>สร้างบัญชีนักเรียนใหม่</h3>
+
+            <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <Input label="ชื่อ" value={firstName} onChange={setFirstName} placeholder="ชื่อ" />
+              <Input label="นามสกุล" value={lastName} onChange={setLastName} placeholder="นามสกุล" />
+            </div>
+
+            <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <Input label="แผนกวิชา" value={department} onChange={setDepartment} placeholder="เช่น แผนกวิชาคอมพิวเตอร์ธุรกิจ" />
+              <Input label="ระดับชั้น" value={level} onChange={setLevel} placeholder="เช่น ปวช.1" />
+            </div>
+
+            <Input label="อีเมล" value={email} onChange={setEmail} placeholder="student@school.ac.th" />
+            <Input label="รหัสผ่าน" value={password} onChange={setPassword} type="password" placeholder="อย่างน้อย 6 ตัวอักษร" />
+
+            {formError && (
+              <div style={{ background: COLORS.redLight, color: COLORS.red, borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, fontWeight: 600 }}>
+                {formError}
+              </div>
+            )}
+            {formSuccess && (
+              <div style={{ background: COLORS.greenLight, color: COLORS.green, borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, fontWeight: 600 }}>
+                {formSuccess}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <Button onClick={handleCreate} variant="saffron" disabled={creating}>{creating ? "กำลังสร้างบัญชี..." : "สร้างบัญชี"}</Button>
+              <Button onClick={() => setShowForm(false)} variant="ghost">ปิด</Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card style={{ marginBottom: 20 }}>
         <div style={{ padding: 18, display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -1835,45 +1908,51 @@ function UserManagement({ profiles, loading }) {
       </Card>
 
       <Card>
-        <div style={{ padding: 0 }}>
+        <div style={{ padding: 14 }}>
           {loading ? (
             <div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>กำลังโหลด...</div>
           ) : filtered.length === 0 ? (
             <div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>ไม่พบผู้ใช้งาน</div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
-                <thead>
-                  <tr style={{ background: COLORS.navyMid }}>
-                    {["ชื่อ-นามสกุล", "บทบาท", "แผนก / วิชา", "อีเมล"].map(h => (
-                      <th key={h} style={{ textAlign: "left", padding: "12px 16px", color: COLORS.textSecondary, fontSize: 13, fontWeight: 700 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(p => (
-                    <tr key={p.id} style={{ borderBottom: `1px solid ${COLORS.glassBorder}` }}>
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            background: p.role === "teacher" ? G.amber : G.emerald,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontWeight: 700, color: COLORS.white, fontSize: 13, flexShrink: 0,
-                          }}>{p.name.charAt(0)}</div>
-                          <span style={{ color: COLORS.textPrimary, fontWeight: 600, fontSize: 14 }}>{p.name}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: "14px 16px" }}><RoleBadge role={p.role} /></td>
-                      <td style={{ padding: "14px 16px", color: COLORS.textSecondary, fontSize: 13.5 }}>
-                        {p.role === "teacher" ? (p.subject || "-") : (p.department || "-")}
-                        {p.role === "student" && p.level ? ` · ${p.level}` : ""}
-                      </td>
-                      <td style={{ padding: "14px 16px", color: COLORS.textMuted, fontSize: 13 }}>{p.email}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {filtered.map(p => {
+                const isTeacherRow = p.role === "teacher";
+                const detailLine = isTeacherRow
+                  ? [p.subject ? `วิชา${p.subject}` : null, p.department || null].filter(Boolean).join(" · ")
+                  : [p.level || null, p.department ? `แผนก${p.department}` : null].filter(Boolean).join(" ");
+
+                return (
+                  <div key={p.id} style={{
+                    display: "flex", alignItems: "center", gap: 14,
+                    padding: "14px 16px", borderRadius: 12,
+                    background: COLORS.navyMid,
+                    border: `1px solid ${COLORS.glassBorder}`,
+                  }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
+                      background: isTeacherRow ? G.amber : G.emerald,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontWeight: 800, color: COLORS.white, fontSize: 17,
+                    }}>{p.name.charAt(0)}</div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ color: COLORS.textPrimary, fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
+                        {p.name}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <RoleBadge role={p.role} />
+                        {detailLine && (
+                          <span style={{ color: COLORS.textSecondary, fontSize: 13 }}>{detailLine}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ color: COLORS.textMuted, fontSize: 12.5, textAlign: "right", flexShrink: 0 }}>
+                      {p.email}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -2091,6 +2170,29 @@ export default function App() {
     setLessons(prev => prev.filter(l => l.id !== id));
   };
 
+  // ── สร้างบัญชีนักเรียนใหม่ (เรียก Edge Function) ────────────────────────────
+  const handleCreateStudent = async (studentData) => {
+    if (!supabase) return { error: "ระบบยังไม่ได้ตั้งค่า Supabase" };
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) return { error: "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่" };
+
+      const { data, error } = await supabase.functions.invoke("create-student", {
+        body: studentData,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (error) return { error: error.message || "สร้างบัญชีไม่สำเร็จ" };
+      if (data?.error) return { error: data.error };
+
+      await loadProfiles();
+      return { success: true };
+    } catch (err) {
+      return { error: err.message || "เกิดข้อผิดพลาดไม่ทราบสาเหตุ" };
+    }
+  };
+
   // ── Likes ──────────────────────────────────────────────────────────────────
   const handleToggleLike = async (announcementId) => {
     if (!supabase) return;
@@ -2275,7 +2377,7 @@ export default function App() {
         {page === "users" && isTeacher && (
           <>
             <BackButton onClick={() => setPage("dashboard")} />
-            <UserManagement profiles={profiles} loading={profilesLoading} />
+            <UserManagement profiles={profiles} loading={profilesLoading} onCreateStudent={handleCreateStudent} />
           </>
         )}
         {page === "help" && !activeExercise && (
