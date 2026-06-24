@@ -457,6 +457,12 @@ function LoginScreen({ onLogin }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');
 
+        html, body, #root {
+          margin: 0;
+          min-height: 100%;
+        }
+        * { box-sizing: border-box; }
+
         @keyframes loginSlideFromLeft {
           0% { opacity: 0; transform: translateX(-40px); }
           100% { opacity: 1; transform: translateX(0); }
