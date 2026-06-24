@@ -13,15 +13,15 @@ import { supabase, isSupabaseConfigured } from "./supabaseClient";
 // ══════════════════════════════════════════════════════════════════════════
 const LOGIN_SLIDES = [
   {
-    url: "https://jkgrncwcsprgtulfponq.supabase.co/storage/v1/object/public/login-slides/ChatGPT%20Image%20May%207,%202026,%2010_31_35%20AM.png",
+    url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80",
     caption: "บรรยากาศการเรียนการสอนในห้องเรียน",
   },
   {
-    url: "https://jkgrncwcsprgtulfponq.supabase.co/storage/v1/object/public/login-slides/IMG_6856.JPG",
+    url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&q=80",
     caption: "กิจกรรมกลุ่มเสริมทักษะการเรียนรู้",
   },
   {
-    url: "https://jkgrncwcsprgtulfponq.supabase.co/storage/v1/object/public/login-slides/IMG_6865.JPG",
+    url: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1200&q=80",
     caption: "ห้องปฏิบัติการและการฝึกทักษะวิชาชีพ",
   },
   {
@@ -1101,14 +1101,85 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
 }
 
 // ── Messages ───────────────────────────────────────────────────────────────
-function Messages({ user, messages, onSend }) {
+function Messages({ user, messages, onSend, profiles }) {
   const [text, setText] = useState("");
   const [toAll, setToAll] = useState(true);
   const [target, setTarget] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // ── @mention autocomplete state ──────────────────────────────────────────
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionStart, setMentionStart] = useState(null); // ตำแหน่งตัวอักษร @ ในข้อความ
+  const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  // รายชื่อทุกคน ไม่รวมตัวเอง กรองตาม query หลัง @
+  const otherPeople = (profiles || []).filter(p => p.id !== user.id);
+  const mentionResults = otherPeople
+    .filter(p => p.name.toLowerCase().includes(mentionQuery.toLowerCase()))
+    .slice(0, 6);
+
+  const handleTextChange = (val) => {
+    setText(val);
+    const cursorPos = inputRef.current?.selectionStart ?? val.length;
+    // หา @ ตัวล่าสุดก่อนตำแหน่ง cursor ที่ยังไม่มี space ปิดท้าย
+    const beforeCursor = val.slice(0, cursorPos);
+    const atIdx = beforeCursor.lastIndexOf("@");
+    if (atIdx !== -1) {
+      const queryPart = beforeCursor.slice(atIdx + 1);
+      if (!/\s/.test(queryPart)) {
+        setMentionStart(atIdx);
+        setMentionQuery(queryPart);
+        setMentionOpen(true);
+        setActiveIdx(0);
+        return;
+      }
+    }
+    setMentionOpen(false);
+  };
+
+  const insertMention = (person) => {
+    if (mentionStart === null) return;
+    const cursorPos = inputRef.current?.selectionStart ?? text.length;
+    const before = text.slice(0, mentionStart);
+    const after = text.slice(cursorPos);
+    const newText = `${before}@${person.name} ${after}`;
+    setText(newText);
+    setMentionOpen(false);
+    setMentionStart(null);
+    // คืน focus ให้ input หลังแทรกชื่อ
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const handleKeyDown = (e) => {
+    if (mentionOpen && mentionResults.length > 0) {
+      if (e.key === "ArrowDown") { e.preventDefault(); setActiveIdx(i => (i + 1) % mentionResults.length); return; }
+      if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx(i => (i - 1 + mentionResults.length) % mentionResults.length); return; }
+      if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); insertMention(mentionResults[activeIdx]); return; }
+      if (e.key === "Escape") { setMentionOpen(false); return; }
+    }
+    if (e.key === "Enter" && !e.shiftKey && !mentionOpen) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  // ── highlight @ชื่อ ในข้อความที่แสดงผล ──────────────────────────────────────
+  const renderWithMentions = (msgText) => {
+    const names = otherPeople.map(p => p.name).sort((a, b) => b.length - a.length);
+    if (names.length === 0) return msgText;
+    const pattern = new RegExp(`@(${names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`, "g");
+    const parts = msgText.split(pattern);
+    return parts.map((part, i) =>
+      i % 2 === 1
+        ? <strong key={i} style={{ color: COLORS.blue, fontWeight: 700 }}>@{part}</strong>
+        : <span key={i}>{part}</span>
+    );
+  };
 
   const handleSend = async () => {
     if (!text.trim()) return;
@@ -1138,7 +1209,7 @@ function Messages({ user, messages, onSend }) {
                       fontSize: 15, lineHeight: 1.6,
                     }}>
                       {m.type === "broadcast" && <span style={{ fontSize: 11, fontWeight: 700, opacity: .8, display: "block", marginBottom: 2 }}>→ {m.to}</span>}
-                      {m.text}
+                      {renderWithMentions(m.text)}
                     </div>
                     <div style={{ fontSize: 11, color: COLORS.textSecondary, marginTop: 4, textAlign: isMe ? "right" : "left" }}>{m.date}</div>
                   </div>
@@ -1169,16 +1240,55 @@ function Messages({ user, messages, onSend }) {
               </div>
             )}
             {!toAll && <Input value={target} onChange={setTarget} placeholder="ชื่อนักเรียน..." />}
-            <div style={{ display: "flex", gap: 10 }}>
-              <input
-                value={text} onChange={e => setText(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
-                placeholder="พิมพ์ข้อความ..." style={{
-                  flex: 1, border: `1.5px solid ${COLORS.slateLight}`, borderRadius: 10,
-                  padding: "10px 14px", fontSize: 15, fontFamily: "inherit",
-                  background: COLORS.navyMid, color: COLORS.textPrimary, outline: "none",
-                }} />
-              <Button onClick={handleSend} variant="jade" disabled={sending}>{sending ? "..." : "ส่ง "}</Button>
+
+            <div style={{ position: "relative" }}>
+              {/* Dropdown รายชื่อสำหรับ @mention */}
+              {mentionOpen && mentionResults.length > 0 && (
+                <div style={{
+                  position: "absolute", bottom: "calc(100% + 8px)", left: 0,
+                  width: 260, maxHeight: 220, overflowY: "auto",
+                  background: COLORS.white, borderRadius: 12,
+                  border: `1px solid ${COLORS.glassBorder}`,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                  zIndex: 50,
+                }}>
+                  {mentionResults.map((p, i) => (
+                    <button key={p.id} onClick={() => insertMention(p)}
+                      onMouseEnter={() => setActiveIdx(i)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        width: "100%", padding: "10px 14px", border: "none",
+                        background: i === activeIdx ? COLORS.blueLight : "transparent",
+                        cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                      }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                        background: p.role === "teacher" ? G.amber : G.emerald,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontWeight: 700, color: COLORS.white, fontSize: 12,
+                      }}>{p.name.charAt(0)}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: COLORS.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                        <div style={{ fontSize: 11, color: COLORS.textMuted }}>{p.role === "teacher" ? "ครู" : "นักเรียน"}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <input
+                  ref={inputRef}
+                  value={text}
+                  onChange={e => handleTextChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="พิมพ์ข้อความ... (พิมพ์ @ เพื่อแท็กชื่อ)" style={{
+                    flex: 1, border: `1.5px solid ${COLORS.slateLight}`, borderRadius: 10,
+                    padding: "10px 14px", fontSize: 15, fontFamily: "inherit",
+                    background: COLORS.navyMid, color: COLORS.textPrimary, outline: "none",
+                  }} />
+                <Button onClick={handleSend} variant="jade" disabled={sending}>{sending ? "..." : "ส่ง "}</Button>
+              </div>
             </div>
           </div>
         </Card>
@@ -2214,7 +2324,7 @@ export default function App() {
         const profile = await loadUserProfile(session.user);
         if (profile) {
           setUser(profile); await loadData();
-          if (profile.role === "teacher") await loadProfiles();
+          await loadProfiles();
         }
       }
       setAuthLoading(false);
@@ -2224,7 +2334,7 @@ export default function App() {
         const profile = await loadUserProfile(session.user);
         if (profile) {
           setUser(profile); await loadData();
-          if (profile.role === "teacher") await loadProfiles();
+          await loadProfiles();
         }
       } else if (event === "SIGNED_OUT") {
         setUser(null); setPage("dashboard"); setActiveExercise(null);
@@ -2432,7 +2542,7 @@ export default function App() {
 
   if (!user) return <LoginScreen onLogin={async (u) => {
     setUser(u); setPage("dashboard"); await loadData();
-    if (u.role === "teacher") await loadProfiles();
+    await loadProfiles();
   }} />;
 
   const isTeacher = user.role === "teacher";
@@ -2470,7 +2580,7 @@ export default function App() {
         {page === "messages" && !activeExercise && (
           <>
             <BackButton onClick={() => setPage("dashboard")} />
-            <Messages user={user} messages={messages} onSend={handleSendMessage} />
+            <Messages user={user} messages={messages} onSend={handleSendMessage} profiles={profiles} />
           </>
         )}
         {page === "exercises" && !activeExercise && (
