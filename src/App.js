@@ -6,6 +6,30 @@ import { supabase, isSupabaseConfigured } from "./supabaseClient";
 // Type: system-ui body
 // Signature: เส้นกรอบบาง + เงาเบา ไม่มี glow effect
 
+// ══════════════════════════════════════════════════════════════════════════
+//  รูปภาพสไลด์หน้า Login (ฝั่งซ้าย)
+//  ── แก้ไขตรงนี้ได้เลยเมื่อมีรูปจริงจากโรงเรียน ──
+//  ใส่ลิงก์รูปแทนที่ url เดิม / เพิ่มหรือลด object ในนี้ได้ตามต้องการ
+// ══════════════════════════════════════════════════════════════════════════
+const LOGIN_SLIDES = [
+  {
+    url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80",
+    caption: "บรรยากาศการเรียนการสอนในห้องเรียน",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&q=80",
+    caption: "กิจกรรมกลุ่มเสริมทักษะการเรียนรู้",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1200&q=80",
+    caption: "ห้องปฏิบัติการและการฝึกทักษะวิชาชีพ",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1200&q=80",
+    caption: "งานแสดงผลงานและกิจกรรมนักเรียน",
+  },
+];
+
 const COLORS = {
   // โทนหลัก — ฟ้า-ขาว
   navy: "#2563EB",        // ฟ้าหลัก (ใช้แทนที่ navy เดิม)
@@ -344,60 +368,89 @@ function LoginScreen({ onLogin }) {
     setLoading(false);
   };
 
+  // ── Image slider state ──────────────────────────────────────────────────
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlideIndex(prev => (prev + 1) % LOGIN_SLIDES.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div style={{
       minHeight: "100vh",
       display: "flex",
       fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
     }}>
-      {/* ── ฝั่งซ้าย: แบรนด์ + สถิติ ── */}
+      {/* ── ฝั่งซ้าย: สไลด์รูปภาพ ── */}
       <div className="login-slide-left" style={{
         flex: "1 1 50%",
-        background: "linear-gradient(160deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%)",
-        color: COLORS.white,
-        display: "flex", flexDirection: "column",
-        justifyContent: "space-between",
-        padding: "48px 56px",
         position: "relative", overflow: "hidden",
         minHeight: "100vh",
       }}>
-        {/* decorative circles */}
-        <div style={{ position:"absolute", width:380, height:380, borderRadius:"50%", background:"rgba(255,255,255,0.07)", top:-140, right:-120 }} />
-        <div style={{ position:"absolute", width:260, height:260, borderRadius:"50%", background:"rgba(255,255,255,0.05)", bottom:-100, left:-80 }} />
+        {/* รูปสไลด์ทั้งหมด ซ้อนกันแล้ว fade สลับ */}
+        {LOGIN_SLIDES.map((slide, i) => (
+          <div key={i} style={{
+            position: "absolute", inset: 0,
+            backgroundImage: `url(${slide.url})`,
+            backgroundSize: "cover", backgroundPosition: "center",
+            opacity: i === slideIndex ? 1 : 0,
+            transition: "opacity 1s ease",
+          }} />
+        ))}
 
-        <div style={{ position:"relative", zIndex:1 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom: 64 }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 12,
-              background: "rgba(255,255,255,0.18)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 19, fontWeight: 800, color: COLORS.white,
-            }}>E</div>
-            <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.3px" }}>EduClass</span>
-          </div>
+        {/* overlay สีน้ำเงินทับรูป ให้ตัวอักษรอ่านง่าย */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "linear-gradient(160deg, rgba(29,78,216,0.88) 0%, rgba(37,99,235,0.82) 50%, rgba(59,130,246,0.78) 100%)",
+        }} />
 
-          <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, letterSpacing: "0.5px", marginBottom: 14 }}>
-            สำหรับสถานศึกษายุคใหม่
-          </div>
-          <h1 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.3, margin: "0 0 18px", letterSpacing: "-0.5px" }}>
-            จัดการการเรียนการสอน<br />อย่างเป็นระบบ
-          </h1>
-          <p style={{ fontSize: 15, opacity: 0.85, lineHeight: 1.7, maxWidth: 420, margin: 0 }}>
-            จัดการประกาศ แบบฝึกหัด คะแนน และการสื่อสารระหว่างครูกับนักเรียน ไว้ในที่เดียว — เพื่อให้ทุกคนโฟกัสกับการเรียนรู้
-          </p>
-        </div>
-
-        <div style={{ position:"relative", zIndex:1, display: "flex", gap: 36, flexWrap: "wrap" }}>
-          {[
-            { value: "100%", label: "เก็บข้อมูลปลอดภัยบนคลาวด์" },
-            { value: "24/7", label: "เข้าถึงได้ทุกที่ทุกเวลา" },
-            { value: "AI", label: "ผู้ช่วยตรวจแบบฝึกหัดอัตโนมัติ" },
-          ].map((s, i) => (
-            <div key={i}>
-              <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>{s.value}</div>
-              <div style={{ fontSize: 12.5, opacity: 0.8, maxWidth: 140, lineHeight: 1.5 }}>{s.label}</div>
+        <div style={{
+          position: "relative", zIndex: 1, height: "100%",
+          display: "flex", flexDirection: "column", justifyContent: "space-between",
+          padding: "48px 56px", color: COLORS.white,
+        }}>
+          <div>
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom: 64 }}>
+              <div style={{
+                width: 42, height: 42, borderRadius: 12,
+                background: "rgba(255,255,255,0.18)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 19, fontWeight: 800, color: COLORS.white,
+              }}>E</div>
+              <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.3px" }}>EduClass</span>
             </div>
-          ))}
+
+            <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, letterSpacing: "0.5px", marginBottom: 14 }}>
+              สำหรับสถานศึกษายุคใหม่
+            </div>
+            <h1 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.3, margin: "0 0 18px", letterSpacing: "-0.5px" }}>
+              จัดการการเรียนการสอน<br />อย่างเป็นระบบ
+            </h1>
+            <p style={{ fontSize: 15, opacity: 0.85, lineHeight: 1.7, maxWidth: 420, margin: 0 }}>
+              จัดการประกาศ แบบฝึกหัด คะแนน และการสื่อสารระหว่างครูกับนักเรียน ไว้ในที่เดียว — เพื่อให้ทุกคนโฟกัสกับการเรียนรู้
+            </p>
+          </div>
+
+          {/* คำบรรยายรูปปัจจุบัน + จุดกดเลื่อน */}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.92, marginBottom: 16, minHeight: 20 }}>
+              {LOGIN_SLIDES[slideIndex].caption}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {LOGIN_SLIDES.map((_, i) => (
+                <button key={i} onClick={() => setSlideIndex(i)} aria-label={`สไลด์ ${i + 1}`}
+                  style={{
+                    width: i === slideIndex ? 28 : 8, height: 8, borderRadius: 999,
+                    border: "none", cursor: "pointer", padding: 0,
+                    background: i === slideIndex ? COLORS.white : "rgba(255,255,255,0.4)",
+                    transition: "all 0.3s ease",
+                  }} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
