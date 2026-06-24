@@ -206,9 +206,11 @@ function RoleBadge({ role }) {
   );
 }
 
-function Card({ children, style, accent }) {
+function Card({ children, style, accent.onClick }) {
   return (
-    <div style={{
+    <div
+    onClick={onClick}
+    style={{
       background: COLORS.glass,
       borderRadius: 12,
       border: `1px solid ${COLORS.glassBorder}`,
