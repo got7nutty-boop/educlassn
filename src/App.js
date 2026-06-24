@@ -169,12 +169,12 @@ const dbToLesson = (r) => ({
 });
 
 // helper: แปลงลิงก์ YouTube ทั่วไปให้เป็นลิงก์ embed
-const toEmbedUrl = (url) => {
-  if (!url) return "";
-  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
-  return url;
-};
+//const toEmbedUrl = (url) => {
+  //if (!url) return "";
+  //const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+  //if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+ // return url;
+//};
 
 // helper: ดึง YouTube video ID เพื่อโหลด thumbnail
 const getYoutubeThumbnail = (url) => {
