@@ -176,6 +176,20 @@ const toEmbedUrl = (url) => {
   return url;
 };
 
+// helper: ดึง YouTube video ID เพื่อโหลด thumbnail
+const getYoutubeThumbnail = (url) => {
+  if (!url) return null;
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+  if (ytMatch) return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+  return null;
+};
+
+// helper: เช็คว่าไฟล์เป็นรูปภาพหรือไม่ จากชื่อไฟล์
+const isImageFile = (fileName) => {
+  if (!fileName) return false;
+  return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(fileName);
+};
+
 // ── Components ─────────────────────────────────────────────────────────────
 
 function RoleBadge({ role }) {
@@ -1674,6 +1688,7 @@ function LearningContent({ user, lessons, onAdd, onDelete }) {
   const [fileObj, setFileObj] = useState(null);
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleFileSelect = (e) => {
@@ -1692,6 +1707,37 @@ function LearningContent({ user, lessons, onAdd, onDelete }) {
     setShowForm(false); setSaving(false);
   };
 
+  // คลิกที่การ์ด: วิดีโอ → เปิด YouTube ตรงในแท็บใหม่ / รูปภาพ → เปิด lightbox / อื่นๆ → เข้าหน้ารายละเอียด
+  const handleCardClick = (l) => {
+    if (l.videoUrl) {
+      window.open(l.videoUrl, "_blank", "noopener,noreferrer");
+    } else if (l.fileUrl && isImageFile(l.fileName)) {
+      setImagePreview(l);
+    } else {
+      setSelected(l);
+    }
+  };
+
+  // Lightbox สำหรับรูปภาพ
+  if (imagePreview) {
+    return (
+      <div onClick={() => setImagePreview(null)} style={{
+        position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 200,
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+        cursor: "zoom-out",
+      }}>
+        <div onClick={e => e.stopPropagation()} style={{ maxWidth: "90vw", maxHeight: "90vh", textAlign: "center" }}>
+          <img src={imagePreview.fileUrl} alt={imagePreview.title} style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: 12, objectFit: "contain" }} />
+          <div style={{ color: COLORS.white, marginTop: 14, fontSize: 15, fontWeight: 600 }}>{imagePreview.title}</div>
+          <button onClick={() => setImagePreview(null)} style={{
+            marginTop: 14, padding: "8px 20px", borderRadius: 10, border: "none",
+            background: "rgba(255,255,255,0.15)", color: COLORS.white, cursor: "pointer", fontFamily: "inherit", fontSize: 13,
+          }}>ปิด</button>
+        </div>
+      </div>
+    );
+  }
+
   if (selected) {
     return (
       <div>
@@ -1701,22 +1747,25 @@ function LearningContent({ user, lessons, onAdd, onDelete }) {
             <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 6 }}>{selected.subject} · {selected.author}</div>
             <h2 style={{ color: COLORS.textPrimary, margin: "0 0 14px" }}>{selected.title}</h2>
 
-            {selected.videoUrl && (
-              <div style={{ position: "relative", paddingBottom: "56.25%", borderRadius: 12, overflow: "hidden", marginBottom: 18, background: COLORS.navyMid }}>
-                <iframe
-                  src={toEmbedUrl(selected.videoUrl)}
-                  title={selected.title}
-                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
-                  allowFullScreen
-                />
-              </div>
-            )}
-
             {selected.description && (
               <p style={{ color: COLORS.textSecondary, lineHeight: 1.7, margin: "0 0 18px" }}>{selected.description}</p>
             )}
 
-            {selected.fileUrl && (
+            {selected.videoUrl && (
+              <a href={selected.videoUrl} target="_blank" rel="noreferrer" style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "10px 16px", borderRadius: 10, marginBottom: 12,
+                background: COLORS.blueLight, color: COLORS.blue,
+                fontWeight: 600, fontSize: 14, textDecoration: "none",
+              }}>
+                เปิดวิดีโอบทเรียน →
+              </a>
+            )}
+
+            {selected.fileUrl && isImageFile(selected.fileName) ? (
+              <img src={selected.fileUrl} alt={selected.title} onClick={() => setImagePreview(selected)}
+                style={{ width: "100%", maxHeight: 420, objectFit: "contain", borderRadius: 12, cursor: "zoom-in", background: COLORS.navyMid, display: "block" }} />
+            ) : selected.fileUrl && (
               <a href={selected.fileUrl} target="_blank" rel="noreferrer" style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
                 padding: "10px 16px", borderRadius: 10,
@@ -1754,12 +1803,12 @@ function LearningContent({ user, lessons, onAdd, onDelete }) {
             <Input label="ลิงก์วิดีโอ (YouTube)" value={videoUrl} onChange={setVideoUrl} placeholder="https://youtube.com/watch?v=..." />
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6, fontSize: 13 }}>ไฟล์เอกสารประกอบ (ไม่บังคับ)</label>
+              <label style={{ display: "block", fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6, fontSize: 13 }}>ไฟล์เอกสารหรือรูปภาพประกอบ (ไม่บังคับ)</label>
               <button onClick={() => fileInputRef.current?.click()} style={{
                 width: "100%", padding: "12px", border: `1.5px dashed ${COLORS.glassBorderBright}`, borderRadius: 10,
                 background: COLORS.navyMid, color: COLORS.textSecondary, cursor: "pointer", fontFamily: "inherit", fontSize: 13,
               }}>
-                {fileObj ? fileObj.name : "เลือกไฟล์ (PDF, DOCX, PPTX สูงสุด 10MB)"}
+                {fileObj ? fileObj.name : "เลือกไฟล์ (PDF, DOCX, PPTX, JPG, PNG สูงสุด 10MB)"}
               </button>
               <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: "none" }} />
             </div>
@@ -1775,26 +1824,49 @@ function LearningContent({ user, lessons, onAdd, onDelete }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
         {lessons.length === 0 ? (
           <Card><div style={{ padding: 40, textAlign: "center", color: COLORS.textMuted }}>ยังไม่มีบทเรียน</div></Card>
-        ) : lessons.map(l => (
-          <Card key={l.id} style={{ cursor: "pointer" }} onClick={() => setSelected(l)}>
-            {l.videoUrl ? (
-              <div style={{ height: 140, background: COLORS.navyMid, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontSize: 13 }}>
-                วิดีโอบทเรียน
+        ) : lessons.map(l => {
+          const ytThumb = getYoutubeThumbnail(l.videoUrl);
+          const isImg = l.fileUrl && isImageFile(l.fileName);
+
+          return (
+            <Card key={l.id} style={{ cursor: "pointer", overflow: "hidden" }} onClick={() => handleCardClick(l)}>
+              {ytThumb ? (
+                <div style={{ position: "relative", height: 150, background: COLORS.navyMid, overflow: "hidden" }}>
+                  <img src={ytThumb} alt={l.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <div style={{
+                    position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "rgba(0,0,0,0.25)",
+                  }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.9)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <div style={{
+                        width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent",
+                        borderLeft: `14px solid ${COLORS.navy}`, marginLeft: 3,
+                      }} />
+                    </div>
+                  </div>
+                </div>
+              ) : isImg ? (
+                <div style={{ height: 150, background: COLORS.navyMid, overflow: "hidden" }}>
+                  <img src={l.fileUrl} alt={l.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </div>
+              ) : (
+                <div style={{ height: 150, background: COLORS.glassMid, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontSize: 13 }}>
+                  เอกสารบทเรียน
+                </div>
+              )}
+              <div style={{ padding: 16 }}>
+                <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 4 }}>{l.subject} · {l.author}</div>
+                <h3 style={{ margin: "0 0 6px", color: COLORS.textPrimary, fontSize: 15, fontWeight: 700 }}>{l.title}</h3>
+                <p style={{ margin: 0, color: COLORS.textSecondary, fontSize: 13, lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                  {l.description}
+                </p>
               </div>
-            ) : (
-              <div style={{ height: 140, background: COLORS.glassMid, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontSize: 13 }}>
-                เอกสารบทเรียน
-              </div>
-            )}
-            <div style={{ padding: 16 }}>
-              <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 4 }}>{l.subject} · {l.author}</div>
-              <h3 style={{ margin: "0 0 6px", color: COLORS.textPrimary, fontSize: 15, fontWeight: 700 }}>{l.title}</h3>
-              <p style={{ margin: 0, color: COLORS.textSecondary, fontSize: 13, lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                {l.description}
-              </p>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
