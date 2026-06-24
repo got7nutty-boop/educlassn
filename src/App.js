@@ -13,15 +13,15 @@ import { supabase, isSupabaseConfigured } from "./supabaseClient";
 // ══════════════════════════════════════════════════════════════════════════
 const LOGIN_SLIDES = [
   {
-    url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80",
+    url: "https://jkgrncwcsprgtulfponq.supabase.co/storage/v1/object/public/login-slides/ChatGPT%20Image%20May%207,%202026,%2010_31_35%20AM.png",
     caption: "บรรยากาศการเรียนการสอนในห้องเรียน",
   },
   {
-    url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&q=80",
+    url: "https://jkgrncwcsprgtulfponq.supabase.co/storage/v1/object/public/login-slides/IMG_6856.JPG",
     caption: "กิจกรรมกลุ่มเสริมทักษะการเรียนรู้",
   },
   {
-    url: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1200&q=80",
+    url: "https://jkgrncwcsprgtulfponq.supabase.co/storage/v1/object/public/login-slides/IMG_6865.JPG",
     caption: "ห้องปฏิบัติการและการฝึกทักษะวิชาชีพ",
   },
   {
