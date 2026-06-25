@@ -594,7 +594,7 @@ function NotificationBell({ notifications, onMarkRead, onMarkAllRead, onGoToAnno
 
       {open && (
         <div style={{
-          position: "absolute", top: "calc(100% + 8px)", left: 0,
+          position: "absolute", top: "calc(100% + 8px)", right: 0,
           width: 320, maxHeight: 420, overflowY: "auto",
           background: COLORS.white, borderRadius: 14,
           border: `1px solid ${COLORS.border}`,
