@@ -13,11 +13,11 @@ import { supabase, isSupabaseConfigured } from "./supabaseClient";
 // ══════════════════════════════════════════════════════════════════════════
 const LOGIN_SLIDES = [
   {
-    url: "https://jkgrncwcsprgtulfponq.supabase.co/storage/v1/object/public/login-slides/IMG_6856.JPG",
+    url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80",
     caption: "บรรยากาศการเรียนการสอนในห้องเรียน",
   },
   {
-    url: "https://jkgrncwcsprgtulfponq.supabase.co/storage/v1/object/public/login-slides/ChatGPT%20Image%20May%207,%202026,%2010_31_35%20AM.png",
+    url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&q=80",
     caption: "กิจกรรมกลุ่มเสริมทักษะการเรียนรู้",
   },
   {
@@ -25,7 +25,7 @@ const LOGIN_SLIDES = [
     caption: "ห้องปฏิบัติการและการฝึกทักษะวิชาชีพ",
   },
   {
-    url: "https://jkgrncwcsprgtulfponq.supabase.co/storage/v1/object/public/login-slides/IMG_6865.JPG",
+    url: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1200&q=80",
     caption: "งานแสดงผลงานและกิจกรรมนักเรียน",
   },
 ];
@@ -153,8 +153,15 @@ const formatDate = (iso) => {
 const dbToAnnouncement = (r) => ({
   id: r.id, author: r.author_name, authorId: r.author_id,
   subject: r.subject, body: r.body, pinned: r.pinned,
+  isSpecial: r.is_special || false,
   imageUrl: r.image_url || null,
   date: formatDate(r.created_at),
+});
+
+const dbToNotification = (r) => ({
+  id: r.id, userId: r.user_id, announcementId: r.announcement_id,
+  title: r.title, body: r.body, isRead: r.is_read,
+  date: formatDate(r.created_at), createdAt: r.created_at,
 });
 
 const dbToExercise = (r) => ({
@@ -541,6 +548,106 @@ function LoginScreen({ onLogin }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────
+// ── Notification Bell (แจ้งเตือนแบบ Facebook) ──────────────────────────────
+function NotificationBell({ notifications, onMarkRead, onMarkAllRead, onGoToAnnouncement }) {
+  const [open, setOpen] = useState(false);
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleBellClick = () => {
+    setOpen(prev => !prev);
+  };
+
+  const handleItemClick = (n) => {
+    if (!n.isRead) onMarkRead(n.id);
+    setOpen(false);
+    if (onGoToAnnouncement) onGoToAnnouncement();
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button onClick={handleBellClick} style={{
+        width: 38, height: 38, borderRadius: 10, border: `1px solid ${COLORS.border}`,
+        background: COLORS.bg, cursor: "pointer", position: "relative",
+        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
+      }}>
+        🔔
+        {unreadCount > 0 && (
+          <span style={{
+            position: "absolute", top: -4, right: -4,
+            minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999,
+            background: COLORS.red, color: COLORS.white,
+            fontSize: 10.5, fontWeight: 800,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            border: `2px solid ${COLORS.white}`,
+          }}>{unreadCount > 9 ? "9+" : unreadCount}</span>
+        )}
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 8px)", left: 0,
+          width: 320, maxHeight: 420, overflowY: "auto",
+          background: COLORS.white, borderRadius: 14,
+          border: `1px solid ${COLORS.border}`,
+          boxShadow: "0 12px 32px rgba(0,0,0,0.18)",
+          zIndex: 200,
+        }}>
+          <div style={{
+            padding: "14px 16px", borderBottom: `1px solid ${COLORS.border}`,
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+          }}>
+            <span style={{ fontWeight: 800, color: COLORS.textPrimary, fontSize: 14.5 }}>การแจ้งเตือน</span>
+            {unreadCount > 0 && (
+              <button onClick={onMarkAllRead} style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: COLORS.blue, fontSize: 12.5, fontWeight: 600, fontFamily: "inherit",
+              }}>อ่านทั้งหมด</button>
+            )}
+          </div>
+
+          {notifications.length === 0 ? (
+            <div style={{ padding: 32, textAlign: "center", color: COLORS.textMuted, fontSize: 13.5 }}>
+              ยังไม่มีการแจ้งเตือน
+            </div>
+          ) : notifications.map(n => (
+            <button key={n.id} onClick={() => handleItemClick(n)} style={{
+              display: "flex", alignItems: "flex-start", gap: 10,
+              width: "100%", padding: "12px 16px", border: "none",
+              borderBottom: `1px solid ${COLORS.border}`,
+              background: n.isRead ? "transparent" : COLORS.redLight,
+              cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+            }}>
+              <div style={{
+                width: 8, height: 8, borderRadius: "50%", flexShrink: 0, marginTop: 6,
+                background: n.isRead ? "transparent" : COLORS.red,
+              }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: n.isRead ? 600 : 800, color: COLORS.textPrimary, marginBottom: 2 }}>
+                  {n.title}
+                </div>
+                <div style={{ fontSize: 12.5, color: COLORS.textSecondary, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                  {n.body}
+                </div>
+                <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>{n.date}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────
 function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
   const isTeacher = user.role === "teacher";
   const nav = [
@@ -781,6 +888,7 @@ function PostComposer({ user, onAdd }) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [pinned, setPinned] = useState(false);
+  const [isSpecial, setIsSpecial] = useState(false);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -823,8 +931,13 @@ function PostComposer({ user, onAdd }) {
     setSaving(true);
     let imageUrl = null;
     if (isTeacher && imageFile) imageUrl = await uploadImage(imageFile);
-    await onAdd({ author: user.name, authorId: user.id, subject, body, pinned: isTeacher ? pinned : false, imageUrl });
-    setSubject(""); setBody(""); setPinned(false); setShowForm(false);
+    await onAdd({
+      author: user.name, authorId: user.id, subject, body,
+      pinned: isTeacher ? pinned : false,
+      isSpecial: isTeacher ? isSpecial : false,
+      imageUrl,
+    });
+    setSubject(""); setBody(""); setPinned(false); setIsSpecial(false); setShowForm(false);
     removeImage();
     setSaving(false);
   };
@@ -902,9 +1015,17 @@ function PostComposer({ user, onAdd }) {
             )}
 
             {isTeacher && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <input type="checkbox" id="pin" checked={pinned} onChange={e => setPinned(e.target.checked)} />
-                <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.textPrimary, cursor: "pointer", fontSize: 13 }}>ปักหมุดประกาศนี้</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input type="checkbox" id="pin" checked={pinned} onChange={e => setPinned(e.target.checked)} />
+                  <label htmlFor="pin" style={{ fontWeight: 600, color: COLORS.textPrimary, cursor: "pointer", fontSize: 13 }}>ปักหมุดประกาศนี้</label>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input type="checkbox" id="special" checked={isSpecial} onChange={e => setIsSpecial(e.target.checked)} />
+                  <label htmlFor="special" style={{ fontWeight: 600, color: COLORS.red, cursor: "pointer", fontSize: 13 }}>
+                    ประกาศพิเศษ (แจ้งเตือนไปยังนักเรียนทุกคน)
+                  </label>
+                </div>
               </div>
             )}
 
@@ -1018,7 +1139,7 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
         const commentsOpen = !!openComments[a.id];
 
         return (
-          <Card key={a.id} accent={a.pinned ? COLORS.amber : null} style={{ marginBottom: 16 }}>
+          <Card key={a.id} accent={a.isSpecial ? COLORS.red : (a.pinned ? COLORS.amber : null)} style={{ marginBottom: 16 }}>
             {/* Post header */}
             <div style={{ padding: "16px 18px 12px", display: "flex", alignItems: "flex-start", gap: 12 }}>
               <div style={{
@@ -1028,7 +1149,16 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
                 fontWeight: 800, color: COLORS.white, fontSize: 17,
               }}>{a.author.charAt(0)}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 }}>{a.author}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 }}>{a.author}</span>
+                  {a.isSpecial && (
+                    <span style={{
+                      background: COLORS.redLight, color: COLORS.red,
+                      fontSize: 10.5, fontWeight: 800, padding: "2px 8px", borderRadius: 20,
+                      letterSpacing: "0.3px",
+                    }}>ประกาศพิเศษ</span>
+                  )}
+                </div>
                 <div style={{ fontSize: 12, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
                   {a.date}
                   {a.pinned && <span style={{ color: COLORS.amber, fontWeight: 700 }}>· ปักหมุด</span>}
@@ -2275,6 +2405,7 @@ export default function App() {
   const [lessons, setLessons] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [profilesLoading, setProfilesLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const [activeExercise, setActiveExercise] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -2297,6 +2428,18 @@ export default function App() {
     if (likeRes.data) setLikes(likeRes.data);
     if (commentRes.data) setComments(commentRes.data.map(dbToComment));
     if (lessonRes.data) setLessons(lessonRes.data.map(dbToLesson));
+  };
+
+  // ── โหลดแจ้งเตือนของผู้ใช้ปัจจุบัน ────────────────────────────────────────
+  const loadNotifications = async (userId) => {
+    if (!supabase || !userId) return;
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (!error && data) setNotifications(data.map(dbToNotification));
   };
 
   // ── โหลดรายชื่อผู้ใช้งานทั้งหมด (สำหรับครู) ───────────────────────────────
@@ -2325,6 +2468,7 @@ export default function App() {
         if (profile) {
           setUser(profile); await loadData();
           await loadProfiles();
+          await loadNotifications(profile.id);
         }
       }
       setAuthLoading(false);
@@ -2335,10 +2479,12 @@ export default function App() {
         if (profile) {
           setUser(profile); await loadData();
           await loadProfiles();
+          await loadNotifications(profile.id);
         }
       } else if (event === "SIGNED_OUT") {
         setUser(null); setPage("dashboard"); setActiveExercise(null);
         setAnnouncements([]); setExercises([]); setSubmissions([]);
+        setNotifications([]);
       }
     });
     return () => subscription.unsubscribe();
@@ -2367,14 +2513,47 @@ export default function App() {
   };
 
   // ── Announcements CRUD ────────────────────────────────────────────────────
+  // ── Notifications ──────────────────────────────────────────────────────────
+  const handleMarkNotificationRead = async (id) => {
+    if (!supabase) return;
+    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    if (!supabase || !user) return;
+    const unreadIds = notifications.filter(n => !n.isRead).map(n => n.id);
+    if (unreadIds.length === 0) return;
+    await supabase.from("notifications").update({ is_read: true }).in("id", unreadIds);
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
   const handleAddAnnouncement = async (ann) => {
     if (!supabase) return;
     const { data, error } = await supabase.from("announcements").insert([{
       author_id: ann.authorId, author_name: ann.author,
       subject: ann.subject, body: ann.body, pinned: ann.pinned,
+      is_special: ann.isSpecial || false,
       image_url: ann.imageUrl || null,
     }]).select().single();
-    if (!error && data) setAnnouncements(prev => [dbToAnnouncement(data), ...prev]);
+    if (!error && data) {
+      setAnnouncements(prev => [dbToAnnouncement(data), ...prev]);
+
+      // ── ถ้าเป็นประกาศพิเศษ: สร้างแจ้งเตือนให้นักเรียนทุกคน ──────────────────
+      if (ann.isSpecial) {
+        const studentIds = profiles.filter(p => p.role === "student" && p.id !== ann.authorId).map(p => p.id);
+        if (studentIds.length > 0) {
+          const rows = studentIds.map(uid => ({
+            user_id: uid, announcement_id: data.id,
+            title: "ประกาศพิเศษ", body: ann.subject,
+          }));
+          const { data: notifData } = await supabase.from("notifications").insert(rows).select();
+          if (notifData && user) {
+            // ถ้าตัวเองอยู่ในรายชื่อด้วย (ไม่ใช่กรณีนี้เพราะกรองออกแล้ว) ก็ไม่ต้องเติม state ซ้ำ
+          }
+        }
+      }
+    }
   };
 
   const handleDeleteAnnouncement = async (id) => {
@@ -2543,6 +2722,7 @@ export default function App() {
   if (!user) return <LoginScreen onLogin={async (u) => {
     setUser(u); setPage("dashboard"); await loadData();
     await loadProfiles();
+    await loadNotifications(u.id);
   }} />;
 
   const isTeacher = user.role === "teacher";
@@ -2563,6 +2743,16 @@ export default function App() {
           color: COLORS.white, cursor: "pointer", fontSize: 20,
           boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
         }}>≡</button>
+
+        {/* แถบบนสุด: กระดิ่งแจ้งเตือน */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+          <NotificationBell
+            notifications={notifications}
+            onMarkRead={handleMarkNotificationRead}
+            onMarkAllRead={handleMarkAllNotificationsRead}
+            onGoToAnnouncement={() => { setPage("announcements"); setActiveExercise(null); }}
+          />
+        </div>
 
         {page === "dashboard" && !activeExercise && (
           <Dashboard user={user} announcements={announcements} exercises={exercises}
