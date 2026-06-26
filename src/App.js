@@ -2536,7 +2536,13 @@ export default function App() {
       is_special: ann.isSpecial || false,
       image_url: ann.imageUrl || null,
     }]).select().single();
-    if (!error && data) {
+
+    if (error) {
+      console.error("เพิ่มประกาศไม่สำเร็จ:", error.message);
+      return;
+    }
+
+    if (data) {
       setAnnouncements(prev => [dbToAnnouncement(data), ...prev]);
 
       // ── ถ้าเป็นประกาศพิเศษ: สร้างแจ้งเตือนให้นักเรียนทุกคน ──────────────────
@@ -2547,10 +2553,14 @@ export default function App() {
             user_id: uid, announcement_id: data.id,
             title: "ประกาศพิเศษ", body: ann.subject,
           }));
-          const { data: notifData } = await supabase.from("notifications").insert(rows).select();
-          if (notifData && user) {
-            // ถ้าตัวเองอยู่ในรายชื่อด้วย (ไม่ใช่กรณีนี้เพราะกรองออกแล้ว) ก็ไม่ต้องเติม state ซ้ำ
+          // ไม่ใช้ .select() ตรงนี้ เพราะ RLS อนุญาตอ่านได้แค่แจ้งเตือนของตัวเอง
+          // ครูจึงอ่านกลับ (select) แจ้งเตือนที่สร้างให้นักเรียนคนอื่นไม่ได้ แม้ insert จะสำเร็จก็ตาม
+          const { error: notifErr } = await supabase.from("notifications").insert(rows);
+          if (notifErr) {
+            console.error("สร้างแจ้งเตือนไม่สำเร็จ:", notifErr.message);
           }
+        } else {
+          console.warn("ไม่พบรายชื่อนักเรียนใน profiles — แจ้งเตือนจึงไม่ถูกสร้าง");
         }
       }
     }
