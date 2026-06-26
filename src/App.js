@@ -394,69 +394,79 @@ function LoginScreen({ onLogin }) {
       {/* ── ฝั่งซ้าย: สไลด์รูปภาพ ── */}
       <div className="login-slide-left" style={{
         flex: "1 1 50%",
+        background: "linear-gradient(160deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%)",
+        color: COLORS.white,
+        display: "flex", flexDirection: "column",
+        justifyContent: "space-between",
+        padding: "48px 56px",
         position: "relative", overflow: "hidden",
         minHeight: "100vh",
       }}>
-        {/* รูปสไลด์ทั้งหมด ซ้อนกันแล้ว fade สลับ */}
-        {LOGIN_SLIDES.map((slide, i) => (
-          <div key={i} style={{
-            position: "absolute", inset: 0,
-            backgroundImage: `url(${slide.url})`,
-            backgroundSize: "cover", backgroundPosition: "center",
-            opacity: i === slideIndex ? 1 : 0,
-            transition: "opacity 1s ease",
-          }} />
-        ))}
+        {/* decorative circles */}
+        <div style={{ position:"absolute", width:380, height:380, borderRadius:"50%", background:"rgba(255,255,255,0.07)", top:-140, right:-120 }} />
+        <div style={{ position:"absolute", width:260, height:260, borderRadius:"50%", background:"rgba(255,255,255,0.05)", bottom:-100, left:-80 }} />
 
-        {/* overlay สีน้ำเงินทับรูป ให้ตัวอักษรอ่านง่าย */}
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "linear-gradient(160deg, rgba(29,78,216,0.88) 0%, rgba(37,99,235,0.82) 50%, rgba(59,130,246,0.78) 100%)",
-        }} />
-
-        <div style={{
-          position: "relative", zIndex: 1, height: "100%",
-          display: "flex", flexDirection: "column", justifyContent: "space-between",
-          padding: "48px 56px", color: COLORS.white,
-        }}>
-          <div>
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom: 64 }}>
-              <div style={{
-                width: 42, height: 42, borderRadius: 12,
-                background: "rgba(255,255,255,0.18)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 19, fontWeight: 800, color: COLORS.white,
-              }}>E</div>
-              <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.3px" }}>EduClass</span>
-            </div>
-
-            <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, letterSpacing: "0.5px", marginBottom: 14 }}>
-              สำหรับสถานศึกษายุคใหม่
-            </div>
-            <h1 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.3, margin: "0 0 18px", letterSpacing: "-0.5px" }}>
-              จัดการการเรียนการสอน<br />อย่างเป็นระบบ
-            </h1>
-            <p style={{ fontSize: 15, opacity: 0.85, lineHeight: 1.7, maxWidth: 420, margin: 0 }}>
-              จัดการประกาศ แบบฝึกหัด คะแนน และการสื่อสารระหว่างครูกับนักเรียน ไว้ในที่เดียว — เพื่อให้ทุกคนโฟกัสกับการเรียนรู้
-            </p>
+        <div style={{ position:"relative", zIndex:1 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom: 48 }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 12,
+              background: "rgba(255,255,255,0.18)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 19, fontWeight: 800, color: COLORS.white,
+            }}>E</div>
+            <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.3px" }}>EduClass</span>
           </div>
 
-          {/* คำบรรยายรูปปัจจุบัน + จุดกดเลื่อน */}
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.92, marginBottom: 16, minHeight: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, letterSpacing: "0.5px", marginBottom: 14 }}>
+            สำหรับสถานศึกษายุคใหม่
+          </div>
+          <h1 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.3, margin: "0 0 18px", letterSpacing: "-0.5px" }}>
+            จัดการการเรียนการสอน<br />อย่างเป็นระบบ
+          </h1>
+          <p style={{ fontSize: 15, opacity: 0.85, lineHeight: 1.7, maxWidth: 420, margin: "0 0 32px" }}>
+            จัดการประกาศ แบบฝึกหัด คะแนน และการสื่อสารระหว่างครูกับนักเรียน ไว้ในที่เดียว — เพื่อให้ทุกคนโฟกัสกับการเรียนรู้
+          </p>
+        </div>
+
+        {/* ── กรอบสี่เหลี่ยมแนวนอน แสดงรูปสไลด์แยกชัดเจน ไม่ทับซ้อนข้อความ ── */}
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{
+            position: "relative", width: "100%", aspectRatio: "16 / 9",
+            borderRadius: 16, overflow: "hidden",
+            boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            marginBottom: 18,
+          }}>
+            {LOGIN_SLIDES.map((slide, i) => (
+              <img key={i} src={slide.url} alt={slide.caption} style={{
+                position: "absolute", inset: 0,
+                width: "100%", height: "100%", objectFit: "cover",
+                opacity: i === slideIndex ? 1 : 0,
+                transition: "opacity 1s ease",
+              }} />
+            ))}
+            {/* คำบรรยายซ้อนบนรูปแบบบางๆ มุมล่าง */}
+            <div style={{
+              position: "absolute", left: 0, right: 0, bottom: 0,
+              padding: "20px 18px 14px",
+              background: "linear-gradient(to top, rgba(0,0,0,0.55), transparent)",
+              fontSize: 13.5, fontWeight: 600,
+            }}>
               {LOGIN_SLIDES[slideIndex].caption}
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              {LOGIN_SLIDES.map((_, i) => (
-                <button key={i} onClick={() => setSlideIndex(i)} aria-label={`สไลด์ ${i + 1}`}
-                  style={{
-                    width: i === slideIndex ? 28 : 8, height: 8, borderRadius: 999,
-                    border: "none", cursor: "pointer", padding: 0,
-                    background: i === slideIndex ? COLORS.white : "rgba(255,255,255,0.4)",
-                    transition: "all 0.3s ease",
-                  }} />
-              ))}
-            </div>
+          </div>
+
+          {/* จุดกดเลื่อนสไลด์ */}
+          <div style={{ display: "flex", gap: 8 }}>
+            {LOGIN_SLIDES.map((_, i) => (
+              <button key={i} onClick={() => setSlideIndex(i)} aria-label={`สไลด์ ${i + 1}`}
+                style={{
+                  width: i === slideIndex ? 28 : 8, height: 8, borderRadius: 999,
+                  border: "none", cursor: "pointer", padding: 0,
+                  background: i === slideIndex ? COLORS.white : "rgba(255,255,255,0.4)",
+                  transition: "all 0.3s ease",
+                }} />
+            ))}
           </div>
         </div>
       </div>
