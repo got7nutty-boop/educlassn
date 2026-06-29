@@ -387,9 +387,10 @@ function LoginScreen({ onLogin }) {
 
   return (
     <div style={{
-      minHeight: "100vh",
+      height: "100vh",
       display: "flex",
       fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+      overflow: "hidden",
     }}>
       {/* ── ฝั่งซ้าย: สไลด์รูปภาพ ── */}
       <div className="login-slide-left" style={{
@@ -397,17 +398,16 @@ function LoginScreen({ onLogin }) {
         background: "linear-gradient(160deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%)",
         color: COLORS.white,
         display: "flex", flexDirection: "column",
-        justifyContent: "space-between",
         padding: "48px 56px",
         position: "relative", overflow: "hidden",
-        minHeight: "100vh",
+        minHeight: "100vh", height: "100vh",
       }}>
         {/* decorative circles */}
         <div style={{ position:"absolute", width:380, height:380, borderRadius:"50%", background:"rgba(255,255,255,0.07)", top:-140, right:-120 }} />
         <div style={{ position:"absolute", width:260, height:260, borderRadius:"50%", background:"rgba(255,255,255,0.05)", bottom:-100, left:-80 }} />
 
-        <div style={{ position:"relative", zIndex:1 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom: 48 }}>
+        <div style={{ position:"relative", zIndex:1, flexShrink: 0 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom: 40 }}>
             <div style={{
               width: 42, height: 42, borderRadius: 12,
               background: "rgba(255,255,255,0.18)",
@@ -417,25 +417,25 @@ function LoginScreen({ onLogin }) {
             <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.3px" }}>EduClass</span>
           </div>
 
-          <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, letterSpacing: "0.5px", marginBottom: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, letterSpacing: "0.5px", marginBottom: 12 }}>
             สำหรับสถานศึกษายุคใหม่
           </div>
-          <h1 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.3, margin: "0 0 18px", letterSpacing: "-0.5px" }}>
+          <h1 style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.3, margin: "0 0 14px", letterSpacing: "-0.5px" }}>
             จัดการการเรียนการสอน<br />อย่างเป็นระบบ
           </h1>
-          <p style={{ fontSize: 15, opacity: 0.85, lineHeight: 1.7, maxWidth: 420, margin: "0 0 32px" }}>
+          <p style={{ fontSize: 14.5, opacity: 0.85, lineHeight: 1.6, maxWidth: 420, margin: "0 0 24px" }}>
             จัดการประกาศ แบบฝึกหัด คะแนน และการสื่อสารระหว่างครูกับนักเรียน ไว้ในที่เดียว — เพื่อให้ทุกคนโฟกัสกับการเรียนรู้
           </p>
         </div>
 
-        {/* ── กรอบสี่เหลี่ยมแนวนอน แสดงรูปสไลด์แยกชัดเจน ไม่ทับซ้อนข้อความ ── */}
-        <div style={{ position: "relative", zIndex: 1 }}>
+        {/* ── กรอบสี่เหลี่ยมแนวนอน แสดงรูปสไลด์ — ขยายเต็มพื้นที่ที่เหลือพอดี ── */}
+        <div style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
           <div style={{
-            position: "relative", width: "100%", aspectRatio: "16 / 9",
+            position: "relative", width: "100%", flex: 1, minHeight: 0,
             borderRadius: 16, overflow: "hidden",
             boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
             border: "1px solid rgba(255,255,255,0.15)",
-            marginBottom: 18,
+            marginBottom: 16,
           }}>
             {LOGIN_SLIDES.map((slide, i) => (
               <img key={i} src={slide.url} alt={slide.caption} style={{
@@ -457,7 +457,7 @@ function LoginScreen({ onLogin }) {
           </div>
 
           {/* จุดกดเลื่อนสไลด์ */}
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
             {LOGIN_SLIDES.map((_, i) => (
               <button key={i} onClick={() => setSlideIndex(i)} aria-label={`สไลด์ ${i + 1}`}
                 style={{
@@ -476,7 +476,7 @@ function LoginScreen({ onLogin }) {
         flex: "1 1 50%",
         background: COLORS.white,
         display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 24, minHeight: "100vh",
+        padding: 24, height: "100vh", overflowY: "auto",
       }}>
         <div className="login-slide-in" style={{ width: "100%", maxWidth: 400 }}>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: COLORS.textPrimary, margin: "0 0 8px", letterSpacing: "-0.4px" }}>
