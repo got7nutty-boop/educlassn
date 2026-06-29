@@ -428,14 +428,14 @@ function LoginScreen({ onLogin }) {
           </p>
         </div>
 
-        {/* ── กรอบสี่เหลี่ยมแนวนอน แสดงรูปสไลด์ — ขยายเต็มพื้นที่ที่เหลือพอดี ── */}
-        <div style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+        {/* ── กรอบสี่เหลี่ยมแนวนอน แสดงรูปสไลด์ — จัดกึ่งกลางแนวตั้งของพื้นที่ที่เหลือ ── */}
+        <div style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 0 }}>
           <div style={{
-            position: "relative", width: "100%", flex: 1, minHeight: 0,
+            position: "relative", width: "100%", aspectRatio: "16 / 9", maxHeight: "calc(100% - 24px)",
             borderRadius: 16, overflow: "hidden",
             boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
             border: "1px solid rgba(255,255,255,0.15)",
-            marginBottom: 16,
+            marginBottom: 16, flexShrink: 0,
           }}>
             {LOGIN_SLIDES.map((slide, i) => (
               <img key={i} src={slide.url} alt={slide.caption} style={{
@@ -457,7 +457,7 @@ function LoginScreen({ onLogin }) {
           </div>
 
           {/* จุดกดเลื่อนสไลด์ */}
-          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0, justifyContent: "center" }}>
             {LOGIN_SLIDES.map((_, i) => (
               <button key={i} onClick={() => setSlideIndex(i)} aria-label={`สไลด์ ${i + 1}`}
                 style={{
