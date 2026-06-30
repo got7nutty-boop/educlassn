@@ -126,6 +126,7 @@ const profileToUser = (profile, authUser) => ({
   department: profile.department || "",
   level: profile.level || "",
   class: profile.classroom || "",
+  avatarUrl: profile.avatar_url || "",
   username: authUser?.email || "",
   email: authUser?.email || "",
 });
@@ -265,6 +266,31 @@ const Icon = ({ name, size = 18, color = "currentColor", strokeWidth = 1.8 }) =>
 };
 
 // ── Components ─────────────────────────────────────────────────────────────
+
+// ── Avatar (รูปโปรไฟล์จริง พร้อม fallback เป็นตัวอักษรย่อ) ───────────────────
+function Avatar({ name, role, avatarUrl, size = 40 }) {
+  const isTeacherRole = role === "teacher";
+  const bg = isTeacherRole ? G.amber : G.emerald;
+  if (avatarUrl) {
+    return (
+      <img src={avatarUrl} alt={name} style={{
+        width: size, height: size, borderRadius: "50%",
+        objectFit: "cover", flexShrink: 0,
+        border: `1px solid ${COLORS.glassBorder}`,
+      }} />
+    );
+  }
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", flexShrink: 0,
+      background: bg,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontWeight: 800, color: COLORS.white, fontSize: size * 0.42,
+    }}>
+      {(name || "?").charAt(0)}
+    </div>
+  );
+}
 
 function RoleBadge({ role }) {
   const isTeacher = role === "teacher";
@@ -752,14 +778,7 @@ function Sidebar({ user, page, setPage, onLogout, mobileOpen, setMobileOpen }) {
             background: COLORS.bg,
             border: `1px solid ${COLORS.border}`,
           }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: "50%",
-              background: isTeacher ? COLORS.amber : COLORS.blue,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 700, color: COLORS.white, fontSize: 15, flexShrink:0,
-            }}>
-              {user.name.charAt(0)}
-            </div>
+            <Avatar name={user.name} role={user.role} avatarUrl={user.avatarUrl} size={36} />
             <div style={{ minWidth:0 }}>
               <div style={{ color: COLORS.textPrimary, fontSize: 13, fontWeight: 600, lineHeight: 1.3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {user.name.length > 14 ? user.name.slice(0, 14) + "…" : user.name}
@@ -1043,12 +1062,7 @@ function PostComposer({ user, onAdd }) {
             width: "100%", background: "none", border: "none", cursor: "pointer",
             padding: 0, fontFamily: "inherit",
           }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: "50%",
-              background: isTeacher ? G.amber : G.emerald, flexShrink: 0,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 800, color: COLORS.white, fontSize: 16,
-            }}>{user.name.charAt(0)}</div>
+            <Avatar name={user.name} role={user.role} avatarUrl={user.avatarUrl} size={40} />
             <div style={{
               flex: 1, textAlign: "left", padding: "10px 16px",
               background: COLORS.navyMid, borderRadius: 24,
@@ -1060,12 +1074,7 @@ function PostComposer({ user, onAdd }) {
         ) : (
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: "50%",
-                background: isTeacher ? G.amber : G.emerald, flexShrink: 0,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontWeight: 800, color: COLORS.white, fontSize: 16,
-              }}>{user.name.charAt(0)}</div>
+              <Avatar name={user.name} role={user.role} avatarUrl={user.avatarUrl} size={40} />
               <div>
                 <div style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 14 }}>{user.name}</div>
                 <div style={{ fontSize: 12, color: COLORS.textMuted }}>กำลังโพสต์ประกาศ</div>
@@ -1139,7 +1148,7 @@ function PostComposer({ user, onAdd }) {
   );
 }
 
-function CommentSection({ user, announcementId, comments, onAddComment, onDeleteComment }) {
+function CommentSection({ user, announcementId, comments, onAddComment, onDeleteComment, profiles }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const myComments = comments.filter(c => c.announcementId === announcementId);
@@ -1158,12 +1167,11 @@ function CommentSection({ user, announcementId, comments, onAddComment, onDelete
         <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 10 }}>
           {myComments.map(c => (
             <div key={c.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                background: c.userRole === "teacher" ? G.amber : G.emerald,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontWeight: 800, color: COLORS.white, fontSize: 12,
-              }}>{c.userName.charAt(0)}</div>
+              <Avatar
+                name={c.userName} role={c.userRole}
+                avatarUrl={(profiles || []).find(p => p.id === c.userId)?.avatarUrl || ""}
+                size={28}
+              />
               <div style={{ flex: 1 }}>
                 <div style={{
                   background: COLORS.navyMid, borderRadius: 12, padding: "8px 12px",
@@ -1185,12 +1193,7 @@ function CommentSection({ user, announcementId, comments, onAddComment, onDelete
       )}
 
       <div style={{ display: "flex", gap: 8 }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-          background: user.role === "teacher" ? G.amber : G.emerald,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontWeight: 800, color: COLORS.white, fontSize: 12,
-        }}>{user.name.charAt(0)}</div>
+        <Avatar name={user.name} role={user.role} avatarUrl={user.avatarUrl} size={28} />
         <input
           value={text} onChange={e => setText(e.target.value)}
           onKeyDown={e => e.key === "Enter" && handleSend()}
@@ -1207,7 +1210,7 @@ function CommentSection({ user, announcementId, comments, onAddComment, onDelete
   );
 }
 
-function Announcements({ user, announcements, onAdd, onDelete, likes, comments, onToggleLike, onAddComment, onDeleteComment }) {
+function Announcements({ user, announcements, onAdd, onDelete, likes, comments, onToggleLike, onAddComment, onDeleteComment, profiles }) {
   const isTeacher = user.role === "teacher";
   const [openComments, setOpenComments] = useState({});
 
@@ -1235,12 +1238,12 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
           <Card key={a.id} accent={a.isSpecial ? COLORS.red : (a.pinned ? COLORS.amber : null)} style={{ marginBottom: 16 }}>
             {/* Post header */}
             <div style={{ padding: "16px 18px 12px", display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
-                background: a.authorId && a.authorId === user.id && !isTeacher ? G.emerald : G.amber,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontWeight: 800, color: COLORS.white, fontSize: 17,
-              }}>{a.author.charAt(0)}</div>
+              <Avatar
+                name={a.author}
+                role={a.authorId === user.id ? user.role : (profiles?.find(p => p.id === a.authorId)?.role || "teacher")}
+                avatarUrl={a.authorId === user.id ? user.avatarUrl : (profiles?.find(p => p.id === a.authorId)?.avatarUrl || "")}
+                size={44}
+              />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 }}>{a.author}</span>
@@ -1315,7 +1318,7 @@ function Announcements({ user, announcements, onAdd, onDelete, likes, comments, 
             {commentsOpen && (
               <CommentSection
                 user={user} announcementId={a.id} comments={comments}
-                onAddComment={onAddComment} onDeleteComment={onDeleteComment}
+                onAddComment={onAddComment} onDeleteComment={onDeleteComment} profiles={profiles}
               />
             )}
           </Card>
@@ -1486,12 +1489,7 @@ function Messages({ user, messages, onSend, profiles }) {
                         background: i === activeIdx ? COLORS.blueLight : "transparent",
                         cursor: "pointer", fontFamily: "inherit", textAlign: "left",
                       }}>
-                      <div style={{
-                        width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                        background: p.role === "teacher" ? G.amber : G.emerald,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontWeight: 700, color: COLORS.white, fontSize: 12,
-                      }}>{p.name.charAt(0)}</div>
+                      <Avatar name={p.name} role={p.role} avatarUrl={p.avatarUrl} size={28} />
                       <div style={{ minWidth: 0 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 600, color: COLORS.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
                         <div style={{ fontSize: 11, color: COLORS.textMuted }}>{p.role === "teacher" ? "ครู" : "นักเรียน"}</div>
@@ -1936,7 +1934,7 @@ function MyScores({ user, submissions, exercises }) {
 }
 
 // ── Settings ────────────────────────────────────────────────────────────────
-function Settings({ user, onSave }) {
+function Settings({ user, onSave, onUploadAvatar }) {
   const isTeacher = user.role === "teacher";
   const splitName = (user.name || "").trim().split(/\s+/);
   const [firstName, setFirstName] = useState(splitName[0] || "");
@@ -1946,6 +1944,9 @@ function Settings({ user, onSave }) {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
+  const avatarInputRef = useRef(null);
 
   useEffect(() => {
     const parts = (user.name || "").trim().split(/\s+/);
@@ -1954,6 +1955,21 @@ function Settings({ user, onSave }) {
     setDepartment(user.department || "");
     setLevel(user.level || user.class || "");
   }, [user]);
+
+  const handleAvatarFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setAvatarError("กรุณาเลือกไฟล์รูปภาพเท่านั้น"); return; }
+    if (file.size > 3 * 1024 * 1024) { setAvatarError("ขนาดไฟล์ต้องไม่เกิน 3MB"); return; }
+
+    setAvatarError("");
+    setUploadingAvatar(true);
+    const result = await onUploadAvatar(file);
+    setUploadingAvatar(false);
+
+    if (result?.error) setAvatarError(result.error);
+    if (avatarInputRef.current) avatarInputRef.current.value = "";
+  };
 
   const handleSave = async () => {
     const name = `${firstName.trim()} ${lastName.trim()}`.trim() || user.name;
@@ -2051,15 +2067,38 @@ function Settings({ user, onSave }) {
 
         <Card>
           <div style={{ padding: 22 }}>
-            <div style={{
-              width: 58, height: 58, borderRadius: "50%",
-              background: isTeacher ? G.amber : G.emerald,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 24, fontWeight: 800, color: isTeacher ? COLORS.navy : COLORS.white,
-              marginBottom: 14,
-            }}>
-              {(firstName || user.name).charAt(0)}
+            {/* รูปโปรไฟล์ — คลิกเพื่ออัปโหลดรูปจริง */}
+            <div style={{ position: "relative", width: 58, marginBottom: 14 }}>
+              <Avatar name={firstName || user.name} role={user.role} avatarUrl={user.avatarUrl} size={58} />
+              <button
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                title="เปลี่ยนรูปโปรไฟล์"
+                style={{
+                  position: "absolute", bottom: -2, right: -2,
+                  width: 24, height: 24, borderRadius: "50%",
+                  background: COLORS.blue, border: `2px solid ${COLORS.white}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: uploadingAvatar ? "not-allowed" : "pointer",
+                  opacity: uploadingAvatar ? 0.6 : 1,
+                }}
+              >
+                <Icon name="upload" size={11} color={COLORS.white} />
+              </button>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarFileSelect}
+                style={{ display: "none" }}
+              />
             </div>
+            {uploadingAvatar && (
+              <div style={{ fontSize: 12, color: COLORS.blue, marginBottom: 8 }}>กำลังอัปโหลด...</div>
+            )}
+            {avatarError && (
+              <div style={{ fontSize: 12, color: COLORS.red, marginBottom: 8 }}>{avatarError}</div>
+            )}
             <div style={{ color: COLORS.textPrimary, fontWeight: 800, fontSize: 18, lineHeight: 1.35 }}>
               {`${firstName} ${lastName}`.trim() || user.name}
             </div>
@@ -2414,12 +2453,7 @@ function UserManagement({ profiles, loading, onCreateStudent }) {
                     background: COLORS.navyMid,
                     border: `1px solid ${COLORS.glassBorder}`,
                   }}>
-                    <div style={{
-                      width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
-                      background: isTeacherRow ? G.amber : G.emerald,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontWeight: 800, color: COLORS.white, fontSize: 17,
-                    }}>{p.name.charAt(0)}</div>
+                    <Avatar name={p.name} role={p.role} avatarUrl={p.avatarUrl} size={44} />
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ color: COLORS.textPrimary, fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
@@ -2565,10 +2599,38 @@ export default function App() {
         id: p.id,
         name: `${p.first_name || ""} ${p.last_name || ""}`.trim() || "(ไม่มีชื่อ)",
         role: p.role, subject: p.subject || "", department: p.department || "",
-        level: p.level || "", email: p.email || "",
+        level: p.level || "", email: p.email || "", avatarUrl: p.avatar_url || "",
       })));
     }
     setProfilesLoading(false);
+  };
+
+  // ── อัปโหลดรูปโปรไฟล์ ─────────────────────────────────────────────────────
+  const handleUploadAvatar = async (file) => {
+    if (!supabase || !user) return { error: "ระบบยังไม่ได้ตั้งค่า Supabase" };
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, cacheControl: "3600" });
+      if (upErr) return { error: upErr.message };
+
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const avatarUrl = `${pub.publicUrl}?t=${Date.now()}`; // กัน cache รูปเก่า
+
+      const { error: updateErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: avatarUrl })
+        .eq("id", user.id);
+      if (updateErr) return { error: updateErr.message };
+
+      setUser(prev => ({ ...prev, avatarUrl }));
+      await loadProfiles();
+      return { success: true, avatarUrl };
+    } catch (err) {
+      return { error: err.message || "อัปโหลดรูปไม่สำเร็จ" };
+    }
   };
 
 
@@ -2887,7 +2949,8 @@ export default function App() {
             <Announcements user={user} announcements={announcements}
               onAdd={handleAddAnnouncement} onDelete={handleDeleteAnnouncement}
               likes={likes} comments={comments}
-              onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment} />
+              onToggleLike={handleToggleLike} onAddComment={handleAddComment} onDeleteComment={handleDeleteComment}
+              profiles={profiles} />
           </>
         )}
         {page === "messages" && !activeExercise && (
@@ -2945,7 +3008,7 @@ export default function App() {
         {page === "settings" && !activeExercise && (
           <>
             <BackButton onClick={() => setPage("dashboard")} />
-            <Settings user={user} onSave={setUser} />
+            <Settings user={user} onSave={setUser} onUploadAvatar={handleUploadAvatar} />
           </>
         )}
         </div>
