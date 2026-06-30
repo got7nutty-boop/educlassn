@@ -851,40 +851,59 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
   const avgScore = mySubmissions.length
     ? Math.round(mySubmissions.reduce((s, x) => s + x.percentage, 0) / mySubmissions.length)
     : 0;
+  const pendingCount = exercises.filter(e => !mySubmissions.find(s => s.exerciseId === e.id)).length;
 
   const teacherSubmissions = submissions.filter(s => exercises.find(e => e.authorId === user.id && e.id === s.exerciseId));
 
   const stats = isTeacher
     ? [
-        { label: "แบบฝึกหัดที่มอบหมาย", value: exercises.filter(e => e.authorId === user.id).length, color: COLORS.saffron, icon: "clipboardCheck" },
-        { label: "ส่งงานแล้ว", value: teacherSubmissions.length, color: COLORS.jade, icon: "check" },
-        { label: "ประกาศทั้งหมด", value: announcements.filter(a => a.authorId === user.id).length, color: COLORS.navyLight, icon: "megaphone" },
+        { label: "แบบฝึกหัดที่มอบหมาย", value: exercises.filter(e => e.authorId === user.id).length, icon: "clipboardCheck" },
+        { label: "ส่งงานแล้ว", value: teacherSubmissions.length, icon: "check" },
+        { label: "ประกาศทั้งหมด", value: announcements.filter(a => a.authorId === user.id).length, icon: "megaphone" },
+        { label: "นักเรียนทั้งหมด", value: "-", icon: "users" },
       ]
     : [
-        { label: "แบบฝึกหัดทั้งหมด", value: totalExercises, color: COLORS.textPrimary, icon: "clipboardCheck" },
-        { label: "ส่งแล้ว", value: doneCount, color: COLORS.jade, icon: "check" },
-        { label: "คะแนนเฉลี่ย", value: avgScore + "%", color: COLORS.saffron, icon: "barChart" },
+        { label: "แบบฝึกหัดทั้งหมด", value: totalExercises, icon: "clipboardCheck" },
+        { label: "ค้างส่ง", value: pendingCount, icon: "fileText" },
+        { label: "ส่งแล้ว", value: doneCount, icon: "check" },
+        { label: "คะแนนเฉลี่ย", value: avgScore + "%", icon: "barChart" },
       ];
 
   return (
     <div>
-      <h2 style={{ fontSize: 26, fontWeight: 900, color: COLORS.textPrimary, margin: "0 0 6px", letterSpacing:"-0.5px" }}>
-        สวัสดี, {user.name}
-      </h2>
-      <p style={{ color: COLORS.textSecondary, margin: "0 0 28px", fontSize: 15 }}>
-        {isTeacher ? `วิชา: ${user.subject}` : `ห้อง: ${user.class}`}
-      </p>
+      {/* ── Welcome banner — การ์ดทักทายพื้นหลังไล่สีฟ้า ── */}
+      <div style={{
+        background: "linear-gradient(120deg, #2563EB 0%, #3B82F6 100%)",
+        borderRadius: 18, padding: "26px 28px", marginBottom: 24,
+        position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.08)", top: -80, right: -60 }} />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: COLORS.white, margin: "0 0 6px", letterSpacing:"-0.4px" }}>
+            ยินดีต้อนรับ, {user.name}
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.85)", margin: 0, fontSize: 14 }}>
+            {isTeacher ? "ภาพรวมการสอนของคุณวันนี้" : `ห้อง: ${user.class} — ภาพรวมการเรียนของคุณวันนี้`}
+          </p>
+        </div>
+      </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 28 }}>
+      {/* ── Stats — กล่อง icon สี่เหลี่ยมมุมมนแบบ moodboard ── */}
+      <div className="grid-4col" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 16, marginBottom: 24 }}>
         {stats.map((s, i) => (
-          <Card key={i} accent={s.color}>
-            <div style={{ padding: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <Icon name={s.icon} size={18} color={s.color} />
+          <Card key={i}>
+            <div style={{ padding: 18, display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                background: COLORS.blueLight,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon name={s.icon} size={20} color={COLORS.blue} />
               </div>
-              <div style={{ fontSize: 30, fontWeight: 800, color: COLORS.textPrimary, fontFamily: "monospace", letterSpacing:"-1px" }}>{s.value}</div>
-              <div style={{ color: COLORS.textSecondary, fontSize: 13, marginTop: 4 }}>{s.label}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.textPrimary, fontFamily: "monospace", lineHeight: 1.1 }}>{s.value}</div>
+                <div style={{ color: COLORS.textSecondary, fontSize: 12.5, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.label}</div>
+              </div>
             </div>
           </Card>
         ))}
@@ -892,44 +911,61 @@ function Dashboard({ user, announcements, exercises, submissions, messages, setP
 
       <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         {/* Latest announcements */}
-        <Card accent={COLORS.jade}>
-          <div style={{ padding: 20 }}>
-            <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 14, fontSize: 15, display: "flex", justifyContent: "space-between" }}>
-              ประกาศล่าสุด
-              <button onClick={() => setPage("announcements")} style={{ background: "none", border: "none", color: COLORS.jade, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>ดูทั้งหมด →</button>
+        <Card>
+          <div style={{ padding: "18px 20px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Icon name="megaphone" size={16} color={COLORS.blue} />
+              <span style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 }}>ประกาศล่าสุด</span>
             </div>
-            {announcements.slice(0, 3).map(a => (
-              <div key={a.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", borderLeft: `3px solid ${a.pinned ? COLORS.amber : COLORS.glassBorder}`, paddingLeft: 12, marginBottom: 12 }}>
-                {a.imageUrl && (
-                  <img src={a.imageUrl} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+            <button onClick={() => setPage("announcements")} style={{ background: "none", border: "none", color: COLORS.blue, cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}>ดูทั้งหมด →</button>
+          </div>
+          <div style={{ padding: "8px 20px 18px" }}>
+            {announcements.length === 0 ? (
+              <div style={{ padding: "16px 0", color: COLORS.textMuted, fontSize: 13.5, textAlign: "center" }}>ยังไม่มีประกาศ</div>
+            ) : announcements.slice(0, 3).map(a => (
+              <div key={a.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${COLORS.glassBorder}` }}>
+                {a.imageUrl ? (
+                  <img src={a.imageUrl} alt="" style={{ width: 42, height: 42, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 42, height: 42, borderRadius: 10, background: COLORS.blueLight, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Icon name="fileText" size={18} color={COLORS.blue} />
+                  </div>
                 )}
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary }}>{a.subject}</div>
-                  <div style={{ fontSize: 12, color: COLORS.textSecondary }}>{a.author} · {a.date}</div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13.5, color: COLORS.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.subject}</div>
+                  <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>{a.author} · {a.date}</div>
                 </div>
+                {a.pinned && <Icon name="pin" size={14} color={COLORS.amber} />}
               </div>
             ))}
           </div>
         </Card>
 
         {/* Upcoming exercises */}
-        <Card accent={COLORS.saffron}>
-          <div style={{ padding: 20 }}>
-            <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 14, fontSize: 15, display: "flex", justifyContent: "space-between" }}>
-              แบบฝึกหัดที่ยังไม่ส่ง
-              <button onClick={() => setPage("exercises")} style={{ background: "none", border: "none", color: COLORS.saffron, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>ดูทั้งหมด →</button>
+        <Card>
+          <div style={{ padding: "18px 20px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Icon name="clipboardCheck" size={16} color={COLORS.blue} />
+              <span style={{ fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 }}>แบบฝึกหัดที่ยังไม่ส่ง</span>
             </div>
-            {exercises.filter(e => !mySubmissions.find(s => s.exerciseId === e.id)).slice(0, 3).map(e => (
-              <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, padding: "8px 10px", background: COLORS.navyMid, borderRadius: 8 }}>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary }}>{e.title}</div>
-                  <div style={{ fontSize: 12, color: COLORS.textSecondary }}>ครบกำหนด: {e.dueDate}</div>
+            <button onClick={() => setPage("exercises")} style={{ background: "none", border: "none", color: COLORS.blue, cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}>ดูทั้งหมด →</button>
+          </div>
+          <div style={{ padding: "8px 20px 18px" }}>
+            {exercises.filter(e => !mySubmissions.find(s => s.exerciseId === e.id)).length === 0 ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 0", color: COLORS.green, fontWeight: 600, fontSize: 13.5 }}>
+                <Icon name="check" size={18} color={COLORS.green} /> ส่งงานครบทุกชิ้นแล้ว!
+              </div>
+            ) : exercises.filter(e => !mySubmissions.find(s => s.exerciseId === e.id)).slice(0, 3).map(e => (
+              <div key={e.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${COLORS.glassBorder}` }}>
+                <div style={{ width: 42, height: 42, borderRadius: 10, background: COLORS.blueLight, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon name="clipboardCheck" size={18} color={COLORS.blue} />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13.5, color: COLORS.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</div>
+                  <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>ครบกำหนด: {e.dueDate}</div>
                 </div>
               </div>
             ))}
-            {exercises.filter(e => !mySubmissions.find(s => s.exerciseId === e.id)).length === 0 && (
-              <div style={{ color: COLORS.green, fontWeight: 600, fontSize: 14 }}> ส่งงานครบทุกชิ้นแล้ว!</div>
-            )}
           </div>
         </Card>
       </div>
