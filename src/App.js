@@ -2226,7 +2226,24 @@ function LearningContent({ user, lessons, onAdd, onDelete }) {
           const isImg = l.fileUrl && isImageFile(l.fileName);
 
           return (
-            <Card key={l.id} style={{ cursor: "pointer", overflow: "hidden" }} onClick={() => handleCardClick(l)}>
+            <Card key={l.id} style={{ cursor: "pointer", overflow: "hidden", position: "relative" }} onClick={() => handleCardClick(l)}>
+              {/* ปุ่มลบ — แสดงเฉพาะครูเจ้าของบทเรียน กดได้ทันทีไม่ต้องเปิดวิดีโอก่อน */}
+              {isTeacher && l.authorId === user.id && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); if (window.confirm("ลบบทเรียนนี้?")) onDelete(l.id); }}
+                  style={{
+                    position: "absolute", top: 10, right: 10, zIndex: 5,
+                    width: 30, height: 30, borderRadius: 8, border: "none",
+                    background: "rgba(15,23,42,0.65)", color: COLORS.white,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", backdropFilter: "blur(4px)",
+                  }}
+                  title="ลบบทเรียน"
+                >
+                  <Icon name="trash" size={14} />
+                </button>
+              )}
+
               {ytThumb ? (
                 <div style={{ position: "relative", height: 150, background: COLORS.navyMid, overflow: "hidden" }}>
                   <img src={ytThumb} alt={l.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
